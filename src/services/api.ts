@@ -9,7 +9,7 @@ const DEV_CANDIDATES = [
 ].filter(Boolean) as string[];
 
 const PROD_CANDIDATES = [
-  (import.meta.env.VITE_API_URL as string | undefined) || 'http://localhost:3000',
+  'https://bk-farm.onrender.com',
 ];
 
 const CANDIDATES = import.meta.env.DEV ? DEV_CANDIDATES : PROD_CANDIDATES;
