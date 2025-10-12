@@ -1,16 +1,24 @@
-import { defineConfig } from 'vite';
+﻿import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
+import { copyFileSync } from 'fs';
 
 // https://vitejs.dev/config/
 export default defineConfig({
-  plugins: [react()],
+  plugins: [
+    react(),
+    {
+      name: 'copy-redirects',
+      closeBundle() {
+        copyFileSync('public/_redirects', 'dist/_redirects');
+      }
+    }
+  ],
   optimizeDeps: {
     exclude: ['lucide-react'],
   },
   server: {
-    host: true, // allow access from LAN (phones/tablets)
+    host: true,
     proxy: {
-      // forward any /api requests to backend on localhost:3000 during dev
       '/api': {
         target: 'http://localhost:3000',
         changeOrigin: true,
