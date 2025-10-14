@@ -1,16 +1,18 @@
 import { Routes, Route } from 'react-router-dom';
-import { useState } from 'react';
+import { useState, useEffect, lazy, Suspense } from 'react';
 import Sidebar from './components/Sidebar';
-import Dashboard from './pages/Dashboard';
-import Advice from './pages/Advice';
-import History from './pages/History';
-import Standards from './pages/Standards';
-import Settings from './pages/Settings';
-import Pricing from './pages/Pricing';
-import { useAppStore } from './store/appStore';
-import Login from './pages/Login';
 import ProtectedRoute from './components/ProtectedRoute';
-import Register from './pages/Register';
+import { useAppStore } from './store/appStore';
+
+// Lazy pages
+const Dashboard = lazy(() => import('./pages/Dashboard'));
+const Advice = lazy(() => import('./pages/Advice'));
+const History = lazy(() => import('./pages/History'));
+const Standards = lazy(() => import('./pages/Standards'));
+const Settings = lazy(() => import('./pages/Settings'));
+const Pricing = lazy(() => import('./pages/Pricing'));
+const Login = lazy(() => import('./pages/Login'));
+const Register = lazy(() => import('./pages/Register'));
 
 function App() {
   // Mobile sidebar state
@@ -26,6 +28,17 @@ function App() {
       : fontSize === 'lg'
       ? 'text-[17px] md:text-[18px]'
       : 'text-[16px] md:text-[17px]';
+
+  // Prefetch frequently visited routes after mount (non-blocking)
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      // Trigger dynamic imports behind the scenes
+      import('./pages/History');
+      import('./pages/Standards');
+      import('./pages/Settings');
+    }, 1200); // wait for initial render settle
+    return () => clearTimeout(timer);
+  }, []);
 
   // ✅ xác định trang hiển thị
   const renderPage = () => {
@@ -49,6 +62,7 @@ function App() {
   // Keep a simple route-based protection: if there's no token, / routes redirect to /login
 
   return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center text-lg font-semibold text-slate-600">Đang tải...</div>}>
     <Routes>
   <Route path="/login" element={<Login />} />
   <Route path="/register" element={<Register />} />
@@ -69,7 +83,7 @@ function App() {
               <div className="absolute bottom-40 left-1/3 w-48 h-48 bg-gradient-to-r from-teal-200/15 to-emerald-200/15 rounded-full blur-3xl animate-bounce"></div>
 
               {/* Sidebar desktop */}
-              <aside className="hidden md:block w-80 fixed left-0 top-0 h-full z-30 shadow-2xl">
+              <aside className="hidden md:block w-72 xl:w-80 fixed left-0 top-0 h-full z-30 shadow-2xl">
                 <Sidebar activePage={activePage} onNavigate={setActivePage} />
               </aside>
 
@@ -96,7 +110,7 @@ function App() {
               </div>
 
               {/* Nội dung chính */}
-              <main className="flex-1 md:ml-80 ml-0 p-4 md:p-8 relative z-10">
+              <main className="flex-1 md:ml-72 xl:ml-80 ml-0 p-4 md:p-8 relative z-10">
                 <div className="max-w-7xl mx-auto">
                   {/* Thanh trên cùng */}
                   <div className="flex justify-between items-center mb-6 md:mb-8">
@@ -133,6 +147,7 @@ function App() {
         />
       </Route>
     </Routes>
+    </Suspense>
   );
 }
 

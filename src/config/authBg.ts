@@ -8,13 +8,21 @@ export const authBackgroundConfig = {
   overlayOpacity: 0.2, // 0 -> 1
 };
 
-export function authBgStyle(): React.CSSProperties {
+interface AuthBgVars extends React.CSSProperties {
+  '--auth-img-url'?: string;
+  '--auth-img-transform'?: string;
+  '--auth-img-filter'?: string;
+  '--auth-blur'?: string;
+  '--auth-overlay-opacity'?: string;
+}
+
+export function authBgStyle(): AuthBgVars {
   const { imageUrl, zoom, brightness, blurPx, overlayOpacity } = authBackgroundConfig;
   return {
-    ['--auth-img-url' as any]: `url(${imageUrl})`,
-    ['--auth-img-transform' as any]: `scale(${zoom})`,
-    ['--auth-img-filter' as any]: `brightness(${brightness}) saturate(1.05)`,
-    ['--auth-blur' as any]: `blur(${blurPx}px)`,
-    ['--auth-overlay-opacity' as any]: `${overlayOpacity}`,
-  } as React.CSSProperties;
+    '--auth-img-url': `url(${imageUrl})`,
+    '--auth-img-transform': `scale(${zoom})`,
+    '--auth-img-filter': `brightness(${brightness}) saturate(1.05)`,
+    '--auth-blur': `blur(${blurPx}px)`,
+    '--auth-overlay-opacity': `${overlayOpacity}`,
+  };
 }

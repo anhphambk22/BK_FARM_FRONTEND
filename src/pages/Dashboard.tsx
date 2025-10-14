@@ -52,7 +52,7 @@ export default function Dashboard() {
       </div>
 
       {activeTab === 'air' && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           <GaugeCard
             title="Nhiệt độ"
             value={Number(sensorData.airTemperature.toFixed(1))}
@@ -78,7 +78,7 @@ export default function Dashboard() {
       )}
 
       {activeTab === 'soil' && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           <GaugeCard
             title="Nhiệt độ đất"
             value={Number(sensorData.soilTemperature.toFixed(1))}
