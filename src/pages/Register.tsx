@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { register } from '../services/api';
 
@@ -17,12 +17,12 @@ export default function Register() {
     setLoading(true);
     try {
       await register(phone, password);
-      // Không auto-login nữa: chuyển về trang đăng nhập
-      setSuccess('Đăng ký thành công. Vui lòng đăng nhập.');
+      // KhÃ´ng auto-login ná»¯a: chuyá»ƒn vá» trang Ä‘Äƒng nháº­p
+      setSuccess('ÄÄƒng kÃ½ thÃ nh cÃ´ng. Vui lÃ²ng Ä‘Äƒng nháº­p.');
       setTimeout(() => navigate('/login'), 900);
     } catch (err: unknown) {
         console.error('Register error', err);
-      let msg = 'Đăng ký thất bại';
+      let msg = 'ÄÄƒng kÃ½ tháº¥t báº¡i';
       if (typeof err === 'object' && err !== null && 'message' in err) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         msg = (err as any).message || msg;
@@ -41,17 +41,17 @@ export default function Register() {
         onSubmit={handleSubmit}
         className="bg-white/10 backdrop-blur-lg p-8 rounded-2xl shadow-lg w-96"
       >
-        <h1 className="text-3xl font-bold text-center text-white mb-6">Đăng ký BK Farmers</h1>
+        <h1 className="text-3xl font-bold text-center text-white mb-6">ÄÄƒng kÃ½ BK Farmers</h1>
         <input
           type="tel"
-          placeholder="Số điện thoại (ví dụ: 0849123456)"
+          placeholder="Sá»‘ Ä‘iá»‡n thoáº¡i (vÃ­ dá»¥: 0849123456)"
           value={phone}
           onChange={(e) => setPhone(e.target.value)}
           className="w-full p-3 mb-4 rounded-lg bg-white/20 text-white placeholder-gray-300 focus:outline-none"
         />
         <input
           type="password"
-          placeholder="Mật khẩu"
+          placeholder="Máº­t kháº©u"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           className="w-full p-3 mb-4 rounded-lg bg-white/20 text-white placeholder-gray-300 focus:outline-none"
@@ -63,9 +63,15 @@ export default function Register() {
           disabled={loading}
           className="w-full py-3 bg-gradient-to-r from-orange-400 to-yellow-400 text-white font-semibold rounded-lg hover:opacity-90 transition"
         >
-          {loading ? 'Đang đăng ký...' : 'Đăng ký'}
+          {loading ? 'Äang Ä‘Äƒng kÃ½...' : 'ÄÄƒng kÃ½'}
         </button>
-      </form>
+              <div className="mt-4 text-center text-sm text-white/80">
+          Đã có tài khoản?{' '}
+          <button type="button" onClick={() => navigate('/login')} className="underline font-semibold">
+            Đăng nhập
+          </button>
+        </div>      </form>
     </div>
   );
 }
+
