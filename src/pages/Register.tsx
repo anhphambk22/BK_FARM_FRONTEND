@@ -40,7 +40,7 @@ export default function Register() {
     <div className="auth-bg" style={authBgStyle()}>
       <form
         onSubmit={handleSubmit}
-        className="auth-card"
+        className="auth-card w-full max-w-sm sm:max-w-md md:max-w-lg p-6 sm:p-8"
       >
         <h1 className="text-3xl font-bold text-center text-white mb-6">Đăng ký BK Farmers</h1>
         <input

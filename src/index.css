@@ -4,14 +4,12 @@
 
 /* Global UI scaling: make text and icons larger across the app */
 html {
-	/* Increase base font size for the whole app (Tailwind rem-based) */
-	font-size: 16px; /* was ~16px */
+  /* Fluid type: lower bound 15px, upper bound 18px scaling with viewport width */
+  font-size: clamp(15px, 1.1vw + 0.6rem, 18px);
+  -webkit-text-size-adjust: 100%;
 }
-
 @media (max-width: 400px) {
-	html {
-		font-size: 17px; /* slightly smaller on very small devices */
-	}
+  html { font-size: clamp(14px, 4.2vw, 16px); }
 }
 
 /* Auth background utilities */
