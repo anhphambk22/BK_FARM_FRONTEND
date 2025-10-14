@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { login } from '../services/api';
 import { useAuthStore } from '../store/authStore';
+import { authBgStyle } from '../config/authBg';
 
 export default function Login() {
   const { login: setAuth } = useAuthStore();
@@ -31,10 +32,10 @@ export default function Login() {
   };
 
   return (
-    <div className="flex items-center justify-center h-screen bg-gradient-to-br from-emerald-800 to-teal-600">
+    <div className="auth-bg" style={authBgStyle()}>
       <form
         onSubmit={handleLogin}
-        className="bg-white/10 backdrop-blur-lg p-8 rounded-2xl shadow-lg w-96"
+        className="auth-card"
       >
         <h1 className="text-3xl font-bold text-center text-white mb-6">Đăng nhập BK Farmers</h1>
         <input

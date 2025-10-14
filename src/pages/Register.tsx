@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { register } from '../services/api';
+import { authBgStyle } from '../config/authBg';
 
 export default function Register() {
   const [phone, setPhone] = useState('');
@@ -36,10 +37,10 @@ export default function Register() {
   };
 
   return (
-    <div className="flex items-center justify-center h-screen bg-gradient-to-br from-emerald-800 to-teal-600">
+    <div className="auth-bg" style={authBgStyle()}>
       <form
         onSubmit={handleSubmit}
-        className="bg-white/10 backdrop-blur-lg p-8 rounded-2xl shadow-lg w-96"
+        className="auth-card"
       >
         <h1 className="text-3xl font-bold text-center text-white mb-6">Đăng ký BK Farmers</h1>
         <input
