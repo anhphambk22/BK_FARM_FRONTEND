@@ -1,4 +1,4 @@
-﻿import { useState } from 'react';
+﻿import { useState, type CSSProperties } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { register } from '../services/api';
 
@@ -11,6 +11,13 @@ export default function Register() {
   const navigate = useNavigate();
   // No auto-login: we won't use auth store here
 
+  const bgStyle: CSSProperties = {
+    backgroundImage: "linear-gradient(rgba(0,0,0,0.35), rgba(0,0,0,0.35)), url('/bg-coffee.jpg')",
+    backgroundSize: 'cover',
+    backgroundPosition: 'center',
+    backgroundRepeat: 'no-repeat',
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -21,7 +28,7 @@ export default function Register() {
       setSuccess('Đăng ký thành công. Vui lòng đăng nhập.');
       setTimeout(() => navigate('/login'), 900);
     } catch (err: unknown) {
-        console.error('Register error', err);
+      console.error('Register error', err);
       let msg = 'Đăng ký thất bại';
       if (typeof err === 'object' && err !== null && 'message' in err) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -29,14 +36,14 @@ export default function Register() {
       } else {
         try { msg = JSON.stringify(err) || msg; } catch { /* ignore stringify errors */ }
       }
-        setError(msg);
+      setError(msg);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="flex items-center justify-center h-screen bg-gradient-to-br from-emerald-800 to-teal-600">
+    <div style={bgStyle} className="flex items-center justify-center h-screen">
       <form
         onSubmit={handleSubmit}
         className="bg-white/10 backdrop-blur-lg p-8 rounded-2xl shadow-lg w-96"

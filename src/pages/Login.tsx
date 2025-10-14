@@ -1,4 +1,4 @@
-﻿import { useState } from 'react';
+﻿import { useState, type CSSProperties } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { login } from '../services/api';
 import { useAuthStore } from '../store/authStore';
@@ -11,14 +11,21 @@ export default function Login() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
+  const bgStyle: CSSProperties = {
+    backgroundImage: "linear-gradient(rgba(0,0,0,0.35), rgba(0,0,0,0.35)), url('/bg-coffee.jpg')",
+    backgroundSize: 'cover',
+    backgroundPosition: 'center',
+    backgroundRepeat: 'no-repeat',
+  };
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setLoading(true);
     try {
-    const data = await login(identifier, password);
-    setAuth(data.token, data.user);
-    navigate('/');
+      const data = await login(identifier, password);
+      setAuth(data.token, data.user);
+      navigate('/');
     } catch (err: unknown) {
       if (typeof err === 'object' && err !== null && 'message' in err) {
         setError((err as { message?: string }).message || 'Đăng nhập thất bại');
@@ -31,7 +38,7 @@ export default function Login() {
   };
 
   return (
-    <div className="flex items-center justify-center h-screen bg-gradient-to-br from-emerald-800 to-teal-600">
+    <div style={bgStyle} className="flex items-center justify-center h-screen">
       <form
         onSubmit={handleLogin}
         className="bg-white/10 backdrop-blur-lg p-8 rounded-2xl shadow-lg w-96"
