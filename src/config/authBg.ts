@@ -1,7 +1,9 @@
 // Central configuration for authentication page background styling
 // Adjust these values to tune appearance without editing component code.
+import coffeeUrl from '../assets/images/coffee.jpg';
+
 export const authBackgroundConfig = {
-  imageUrl: '/src/assets/images/coffee.jpg',
+  imageUrl: coffeeUrl,
   zoom: 1, // scale factor
   brightness: 0.8, // 0(dark) -> 1(normal)
   blurPx: 0, // background blur in px
