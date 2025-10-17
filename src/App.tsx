@@ -83,7 +83,7 @@ function App() {
               <div className="absolute bottom-40 left-1/3 w-48 h-48 bg-gradient-to-r from-teal-200/15 to-emerald-200/15 rounded-full blur-3xl animate-bounce"></div>
 
               {/* Sidebar desktop */}
-              <aside className="hidden md:block w-72 xl:w-80 fixed left-0 top-0 h-full z-30 shadow-2xl">
+              <aside className="hidden md:block w-72 xl:w-80 fixed left-0 top-0 h-full z-30 shadow-2xl overflow-y-auto">
                 <Sidebar activePage={activePage} onNavigate={setActivePage} />
               </aside>
 
@@ -95,7 +95,7 @@ function App() {
                 />
               )}
               <div
-                className={`fixed inset-y-0 left-0 z-50 w-72 bg-white shadow-2xl transform transition-transform duration-300 md:hidden ${
+                className={`fixed inset-y-0 left-0 z-50 w-72 bg-white shadow-2xl transform transition-transform duration-300 md:hidden overflow-y-auto ${
                   mobileOpen ? 'translate-x-0' : '-translate-x-full'
                 }`}
                 aria-hidden={!mobileOpen}
@@ -111,10 +111,10 @@ function App() {
 
               {/* Nội dung chính */}
               <main className="flex-1 md:ml-72 xl:ml-80 ml-0 p-4 md:p-8 relative z-10">
-                <div className="max-w-7xl mx-auto">
+                <div className="w-full max-w-7xl mx-auto lg:ml-auto lg:mr-0">
                   {/* Thanh trên cùng */}
                   <div className="flex justify-between items-center mb-6 md:mb-8">
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-3 min-w-0">
                       {/* Hamburger cho mobile */}
                       <button
                         type="button"
@@ -124,18 +124,28 @@ function App() {
                       >
                         <span className="text-xl">☰</span>
                       </button>
-                      <div>
-                      <div className="text-sm text-slate-500 mb-1">Xin chào, Nguyễn Văn A</div>
-                      <div className="text-xs text-slate-400">Trang trại Lợi Có • Quận 9, TP.HCM</div>
+                      <div className="hidden sm:block truncate">
+                        <div className="text-sm text-slate-500 mb-1 truncate">Xin chào, Nguyễn Văn A</div>
+                        <div className="text-xs text-slate-400 truncate">Trang trại Lợi Có • Quận 9, TP.HCM</div>
                       </div>
                     </div>
 
-                    <button
-                      onClick={() => setActivePage('pricing')}
-                      className="px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-xl font-bold shadow-lg hover:from-purple-700 hover:to-pink-700 transition-all transform hover:scale-105"
-                    >
-                      Nâng cấp Pro
-                    </button>
+                    {/* Pro button: compact on small screens to prevent overflow */}
+                    <div className="flex-shrink-0">
+                      <button
+                        onClick={() => setActivePage('pricing')}
+                        className="hidden sm:inline-flex px-5 py-2 md:px-6 md:py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-xl font-bold shadow-lg hover:from-purple-700 hover:to-pink-700 transition-all"
+                      >
+                        Nâng cấp Pro
+                      </button>
+                      <button
+                        onClick={() => setActivePage('pricing')}
+                        className="sm:hidden inline-flex items-center px-3 py-2 text-sm bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg shadow-md"
+                        aria-label="Nâng cấp Pro"
+                      >
+                        Pro
+                      </button>
+                    </div>
                   </div>
 
                   {/* Hiển thị trang hiện tại */}

@@ -10,24 +10,24 @@ interface MenuItemProps {
 const MenuItem = ({ icon: Icon, text, active, onClick }: MenuItemProps) => (
   <div
     onClick={onClick}
-    className={`group flex items-center p-4 rounded-2xl cursor-pointer
+    className={`group flex items-center p-3 sm:p-4 rounded-2xl cursor-pointer
                  transition-all duration-300 transform
       ${active
         ? 'bg-gradient-to-r from-orange-500/20 to-yellow-500/20 shadow-xl scale-105 border border-orange-300/30'
         : 'hover:bg-white/10 hover:scale-102 hover:shadow-lg backdrop-blur-sm'
       }`}
   >
-    <div className={`p-3 rounded-xl mr-4 transition-all
+      <div className={`p-2.5 sm:p-3 rounded-xl mr-3 transition-all
       ${active
         ? 'bg-gradient-to-r from-orange-400 to-yellow-400 shadow-lg'
         : 'bg-white/20 group-hover:bg-white/30'
       }`}>
-      <Icon className={`w-7 h-7 transition-colors
+      <Icon className={`w-6 h-6 sm:w-7 sm:h-7 transition-colors
         ${active ? 'text-white' : 'text-orange-200 group-hover:text-white'}
       `} />
     </div>
 
-    <span className={`font-semibold text-lg transition-all
+    <span className={`font-semibold text-base sm:text-lg transition-all
       ${active
         ? 'text-white font-semibold'
         : 'text-gray-200 group-hover:text-white'
@@ -50,35 +50,32 @@ interface SidebarProps {
 
 export default function Sidebar({ activePage, onNavigate }: SidebarProps) {
   return (
-    <div className="relative p-6 h-full flex flex-col backdrop-blur-xl">
-      <div className="absolute inset-0 bg-gradient-to-br
-                      from-emerald-900 via-teal-800 to-cyan-900
-                      opacity-95"></div>
-
+    <div className="relative h-full backdrop-blur-xl">
+      <div className="absolute inset-0 bg-gradient-to-br from-emerald-900 via-teal-800 to-cyan-900 opacity-95"></div>
       <div className="absolute inset-0 bg-white/10 backdrop-blur-sm"></div>
 
-      <div className="relative z-10">
+      <div className="relative z-10 h-full flex flex-col p-4 sm:p-6 overflow-y-auto">
         {/* Logo / Header */}
         <div
           onClick={() => onNavigate('dashboard')}
-          className="text-center mb-12 p-4 rounded-2xl
+          className="text-center mb-6 sm:mb-10 p-3 sm:p-4 rounded-2xl
                       bg-white/10 backdrop-blur-md shadow-lg cursor-pointer
                       transition-transform hover:scale-105"
         >
-          <div className="text-sm text-orange-200 mb-2 font-medium">
+          <div className="text-xs sm:text-sm text-orange-200 mb-1 sm:mb-2 font-medium">
             {new Date().toLocaleDateString('vi-VN')}
           </div>
-          <h1 className="text-3xl font-bold bg-gradient-to-r
+          <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r
                          from-white via-orange-100 to-yellow-200
                          bg-clip-text text-transparent mb-2">
             BK Farmers
           </h1>
-          <div className="text-orange-200 text-sm mb-1 font-semibold">LỢI CÓ</div>
-          <div className="text-yellow-200 text-xs">Vì một mùa vụ năng suất</div>
+            <div className="text-orange-200 text-xs sm:text-sm mb-1 font-semibold">LỢI CÓ</div>
+            <div className="text-yellow-200 text-[10px] sm:text-xs">Vì một mùa vụ năng suất</div>
         </div>
 
         {/* Navigation */}
-        <nav className="space-y-3 flex-1">
+        <nav className="space-y-2 sm:space-y-3 flex-1 pr-1">
           {/* 🔹 Nút mới: Màn hình chính */}
           <MenuItem
             icon={Home}
