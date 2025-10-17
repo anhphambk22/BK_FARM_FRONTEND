@@ -52,15 +52,15 @@ export default function GaugeCard({ title, value, unit, status, percentage }: Ga
                        hover:-translate-y-3 hover:scale-105
                        border border-white/20`}>
 
-        <div className="flex justify-between items-start mb-6">
+  <div className="flex justify-between items-start mb-4 md:mb-6">
           <h3 className="text-lg font-bold bg-gradient-to-r
                          from-slate-700 to-slate-900 bg-clip-text text-transparent">
             {title}
           </h3>
-          <div className="text-3xl animate-bounce">{config.emoji}</div>
+          <div className="text-2xl md:text-3xl animate-bounce">{config.emoji}</div>
         </div>
 
-        <div className="relative w-48 h-28 mx-auto mb-6">
+        <div className="relative w-40 h-24 sm:w-44 sm:h-26 md:w-48 md:h-28 lg:w-52 lg:h-32 mx-auto mb-5 md:mb-6">
           <ResponsiveContainer width="100%" height="100%">
             <RadialBarChart
               cx="50%" cy="47%"
@@ -86,12 +86,12 @@ export default function GaugeCard({ title, value, unit, status, percentage }: Ga
             </RadialBarChart>
           </ResponsiveContainer>
 
-          <div className="absolute inset-0 flex flex-col items-center justify-end pb-2">
-            <span className={`text-4xl font-black bg-gradient-to-r ${config.gradient}
+          <div className="absolute inset-0 flex flex-col items-center justify-end pb-1 md:pb-2">
+            <span className={`text-3xl sm:text-4xl lg:text-5xl font-black bg-gradient-to-r ${config.gradient}
                              bg-clip-text text-transparent drop-shadow-lg`}>
               {value}
             </span>
-            <span className="text-sm font-medium text-slate-600 mt-0.5">{unit}</span>
+            <span className="text-xs sm:text-sm font-medium text-slate-600 mt-0.5">{unit}</span>
           </div>
         </div>
 
