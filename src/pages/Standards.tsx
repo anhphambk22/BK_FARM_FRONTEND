@@ -65,6 +65,12 @@ const StandardItem = ({ label, current, standard, unit, percentage, status }: St
 
 export default function Standards() {
   const overallScore = 88;
+  // Balanced circle gauge geometry
+  const size = 128; // svg viewbox (matches w/h utility)
+  const stroke = 10; // ring thickness
+  const center = size / 2;
+  const r = center - stroke / 2; // radius adjusted so stroke fits inside viewbox
+  const circumference = 2 * Math.PI * r;
 
   const standards = [
     { label: 'Nhiệt độ không khí', current: 24, standard: '18-25°C', unit: '°C', percentage: 85, status: 'good' as const },
@@ -97,26 +103,26 @@ export default function Standards() {
             <h2 className="text-2xl font-bold mb-4">Điểm đánh giá tổng thể</h2>
             <div className="flex justify-center items-center mb-4">
               <div className="relative">
-                <svg className="w-32 h-32 transform -rotate-90">
+                <svg className="w-32 h-32 transform -rotate-90" viewBox={`0 0 ${size} ${size}`}> 
                   <circle
-                    cx="64"
-                    cy="64"
-                    r="56"
-                    stroke="rgba(255, 255, 255, 0.2)"
-                    strokeWidth="8"
+                    cx={center}
+                    cy={center}
+                    r={r}
+                    stroke="rgba(255, 255, 255, 0.25)"
+                    strokeWidth={stroke}
                     fill="none"
                   />
                   <circle
-                    cx="64"
-                    cy="64"
-                    r="56"
+                    cx={center}
+                    cy={center}
+                    r={r}
                     stroke="url(#scoreGradient)"
-                    strokeWidth="8"
+                    strokeWidth={stroke}
                     fill="none"
-                    strokeDasharray={`${2 * Math.PI * 56}`}
-                    strokeDashoffset={`${2 * Math.PI * 56 * (1 - overallScore / 100)}`}
+                    strokeDasharray={circumference}
+                    strokeDashoffset={circumference * (1 - overallScore / 100)}
                     strokeLinecap="round"
-                    className="transition-all duration-2000"
+                    className="transition-all duration-700"
                   />
                   <defs>
                     <linearGradient id="scoreGradient" x1="0%" y1="0%" x2="100%" y2="100%">

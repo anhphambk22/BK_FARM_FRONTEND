@@ -24,10 +24,10 @@ function App() {
   // ✅ tạo class thay đổi cỡ chữ toàn app
   const sizeClass =
     fontSize === 'xl'
-      ? 'text-[18px] md:text-[19px]'
+      ? 'text-[16.5px] md:text-[17.5px]'
       : fontSize === 'lg'
-      ? 'text-[17px] md:text-[18px]'
-      : 'text-[16px] md:text-[17px]';
+      ? 'text-[15.5px] md:text-[16.5px]'
+      : 'text-[14.5px] md:text-[15.5px]';
 
   // Prefetch frequently visited routes after mount (non-blocking)
   useEffect(() => {
@@ -83,7 +83,7 @@ function App() {
               <div className="absolute bottom-40 left-1/3 w-48 h-48 bg-gradient-to-r from-teal-200/15 to-emerald-200/15 rounded-full blur-3xl animate-bounce"></div>
 
               {/* Sidebar desktop */}
-              <aside className="hidden md:block w-72 xl:w-80 fixed left-0 top-0 h-full z-30 shadow-2xl overflow-y-auto">
+                <aside className="hidden md:block w-60 xl:w-64 fixed left-0 top-0 h-full z-30 shadow-2xl overflow-y-auto sidebar-root">
                 <Sidebar activePage={activePage} onNavigate={setActivePage} />
               </aside>
 
@@ -95,11 +95,12 @@ function App() {
                 />
               )}
               <div
-                className={`fixed inset-y-0 left-0 z-50 w-72 bg-white shadow-2xl transform transition-transform duration-300 md:hidden overflow-y-auto ${
+                className={`fixed inset-y-0 left-0 z-50 w-60 bg-white shadow-2xl transform transition-transform duration-300 md:hidden overflow-y-auto ${
                   mobileOpen ? 'translate-x-0' : '-translate-x-full'
                 }`}
                 aria-hidden={!mobileOpen}
               >
+                <div className="sidebar-root">
                 <Sidebar
                   activePage={activePage}
                   onNavigate={(p) => {
@@ -107,10 +108,11 @@ function App() {
                     setMobileOpen(false);
                   }}
                 />
+                </div>
               </div>
 
               {/* Nội dung chính */}
-              <main className="flex-1 md:ml-72 xl:ml-80 ml-0 p-4 md:p-8 relative z-10">
+              <main className="flex-1 md:ml-60 xl:ml-64 ml-0 p-4 md:p-8 relative z-10">
                 <div className="w-full max-w-7xl mx-auto lg:ml-auto lg:mr-0">
                   {/* Thanh trên cùng */}
                   <div className="flex justify-between items-center mb-6 md:mb-8">

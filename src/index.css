@@ -4,12 +4,16 @@
 
 /* Global UI scaling: make text and icons larger across the app */
 html {
-  /* Fluid type: lower bound 15px, upper bound 18px scaling with viewport width */
-  font-size: clamp(15px, 1.1vw + 0.6rem, 18px);
-  -webkit-text-size-adjust: 100%;
+	/* Fluid type: slightly smaller to fit 100% zoom: 14.75px → 17.5px */
+		font-size: clamp(14px, 1.0vw + 0.55rem, 17px);
+	-webkit-text-size-adjust: 100%;
 }
 @media (max-width: 400px) {
-  html { font-size: clamp(14px, 4.2vw, 16px); }
+	html { font-size: clamp(13.5px, 4vw, 15.5px); }
+}
+/* When viewport height is small, reduce base type a bit to avoid clipping */
+@media (max-height: 700px) {
+	html { font-size: clamp(13.75px, 0.9vw + 0.5rem, 16.5px); }
 }
 
 /* Auth background utilities */
@@ -66,4 +70,20 @@ html {
 /* Form card refinement */
 .auth-card {
 	@apply relative bg-white/10 backdrop-blur-md p-8 rounded-2xl shadow-lg w-96 border border-white/20;
+}
+
+/* Sidebar compact behavior based on viewport height (shrink, don't hide) */
+@media (max-height: 820px) {
+	.sidebar-root .sidebar-hero { margin-bottom: 0.5rem; padding: 0.5rem; }
+	.sidebar-root .sidebar-title { font-size: 1rem; }
+	.sidebar-root .sidebar-sub { font-size: 0.75rem; }
+	.sidebar-root .sidebar-caption { font-size: 0.65rem; }
+}
+@media (max-height: 740px) {
+	.sidebar-root .sidebar-hero { margin-bottom: 0.375rem; padding: 0.4rem; }
+	.sidebar-root .sidebar-hero > div:first-child { font-size: 0.65rem; }
+	.sidebar-root .sidebar-title { font-size: 0.95rem; }
+	.sidebar-root .sidebar-sub { font-size: 0.7rem; }
+	.sidebar-root .sidebar-caption { font-size: 0.6rem; }
+	.sidebar-root nav { padding-top: 0.25rem; }
 }
