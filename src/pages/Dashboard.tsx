@@ -1,6 +1,7 @@
 import { useAppStore } from '../store/appStore';
 import GaugeCard from '../components/GaugeCard';
 import AssessmentCard from '../components/AssessmentCard';
+import Clock from '../components/Clock';
 
 export default function Dashboard() {
   const { activeTab, setActiveTab, sensorData } = useAppStore();
@@ -18,12 +19,15 @@ export default function Dashboard() {
   return (
     <div className="space-y-8">
       <div className="mb-8">
-        <h1 className="text-4xl font-bold text-slate-800 text-center mb-2">
-          Thông số cây trồng
-        </h1>
-        <p className="text-slate-600 text-center mb-8">
-          Giám sát thông minh cho nông nghiệp hiện đại
-        </p>
+        <div className="flex flex-col items-center gap-2 mb-2">
+          <h1 className="text-4xl font-bold text-slate-800 text-center">
+            Thông số cây trồng
+          </h1>
+        </div>
+        <p className="text-slate-600 text-center">Giám sát thông minh cho nông nghiệp hiện đại</p>
+        <div className="mt-2 flex justify-center">
+          <Clock />
+        </div>
 
         <div className="flex justify-center">
           <div className="bg-white rounded-full p-1 shadow-md">
