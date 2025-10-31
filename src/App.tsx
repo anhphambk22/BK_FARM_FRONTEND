@@ -3,6 +3,7 @@ import { useState, useEffect, lazy, Suspense } from 'react';
 import Sidebar from './components/Sidebar';
 import ProtectedRoute from './components/ProtectedRoute';
 import { useAppStore } from './store/appStore';
+import useMqtt from './hooks/useMqtt';
 
 // Lazy pages
 const Dashboard = lazy(() => import('./pages/Dashboard'));
@@ -39,6 +40,9 @@ function App() {
     }, 1200); // wait for initial render settle
     return () => clearTimeout(timer);
   }, []);
+
+  // Start MQTT (no-op if VITE_MQTT_URL is not provided)
+  useMqtt();
 
   // ✅ xác định trang hiển thị
   const renderPage = () => {
