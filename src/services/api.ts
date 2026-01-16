@@ -29,7 +29,10 @@ async function tryFetch(path: string, init?: RequestInit) {
   for (const base of CANDIDATES) {
     const url = base ? joinUrl(base, path) : path;
     try {
-      const res = await fetch(url, init);
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 8000);
+      const res = await fetch(url, { ...init, signal: controller.signal });
+      clearTimeout(timeout);
       // Nếu server trả response (kể cả lỗi 4xx/5xx), coi như kết nối thành công
       // Chỉ retry nếu network error hoặc server không phản hồi
       if (res.status >= 200 && res.status < 600) {
