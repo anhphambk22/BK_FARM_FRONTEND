@@ -116,8 +116,8 @@ function App() {
               </div>
 
               {/* Nội dung chính */}
-              <main className="flex-1 md:ml-60 xl:ml-64 ml-0 p-4 md:p-8 relative z-10">
-                <div className="w-full max-w-7xl mx-auto lg:ml-auto lg:mr-0">
+              <main className="flex-1 md:ml-60 xl:ml-64 ml-0 px-4 sm:px-6 lg:px-8 py-6 md:py-8 relative z-10">
+                <div className="w-full max-w-6xl mx-auto">
                   {/* Thanh trên cùng */}
                   <div className="flex justify-between items-center mb-6 md:mb-8">
                     <div className="flex items-center gap-3 min-w-0">

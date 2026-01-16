@@ -40,7 +40,7 @@ export default function GaugeCard({ title, value, unit, status, percentage }: Ga
   const data = [{ name: title, value: percentage }];
 
   return (
-    <div className="group relative">
+    <div className="group relative w-full max-w-sm">
       <div className={`absolute -inset-1 bg-gradient-to-r ${config.gradient}
                        rounded-3xl blur opacity-25 group-hover:opacity-40
                        transition duration-1000 group-hover:duration-200`}></div>
