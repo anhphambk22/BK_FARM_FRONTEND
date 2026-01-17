@@ -30,7 +30,7 @@ async function tryFetch(path: string, init?: RequestInit) {
     const url = base ? joinUrl(base, path) : path;
     try {
       const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 8000);
+      const timeout = setTimeout(() => controller.abort(), 60000); // 60s timeout for Render free tier
       const res = await fetch(url, { ...init, signal: controller.signal });
       clearTimeout(timeout);
       // Nếu server trả response (kể cả lỗi 4xx/5xx), coi như kết nối thành công
