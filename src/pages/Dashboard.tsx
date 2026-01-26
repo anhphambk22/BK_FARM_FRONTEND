@@ -1,6 +1,7 @@
 import { useAppStore } from '../store/appStore';
 import GaugeCard from '../components/GaugeCard';
 import AssessmentCard from '../components/AssessmentCard';
+import CultivationCalendar from '../components/CultivationCalendar';
 import Clock from '../components/Clock';
 
 export default function Dashboard() {
@@ -18,6 +19,8 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-8">
+      {/* Lịch canh tác dạng calendar */}
+      <CultivationCalendar />
       <div className="mb-8">
         <div className="flex flex-col items-center gap-2 mb-2">
           <h1 className="text-4xl font-bold text-slate-800 text-center">
