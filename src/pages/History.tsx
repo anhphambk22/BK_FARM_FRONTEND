@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, FormEvent } from 'react';
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
 } from 'recharts';
@@ -7,6 +7,7 @@ import {
 // Kiểu dữ liệu & helper
 // =======================
 type TimeRange = '1d' | '7d' | '30d' | '365d';
+type YieldHistoryRange = 3 | 5 | 7 | 10;
 
 interface RawData {
   ts: number; // timestamp for X-axis
@@ -34,6 +35,21 @@ interface Metric {
   color: string;
   unit: string;
 }
+
+interface YieldRecord {
+  id: string;
+  year: number;
+  season: string;
+  treeAge: number;
+  dryYield: number;
+  freshYield: number;
+  currentPrice: number;
+  profit: number;
+  note?: string;
+  createdAt: number;
+}
+
+const YIELD_STORAGE_KEY = 'bkf_yield_records_v1';
 
 // Không còn chuẩn hoá/ làm tròn: hiển thị giá trị gốc
 
@@ -116,6 +132,36 @@ export default function History() {
     'airHumidity',
   ]);
 
+  const [yieldRange, setYieldRange] = useState<YieldHistoryRange>(5);
+  const [yieldRecords, setYieldRecords] = useState<YieldRecord[]>([]);
+  const [form, setForm] = useState<Omit<YieldRecord, 'id' | 'createdAt'>>({
+    year: new Date().getFullYear(),
+    season: 'Mùa vụ chính',
+    treeAge: 5,
+    dryYield: 2.5,
+    freshYield: 7.5,
+    currentPrice: 40000,
+    profit: 120000000,
+    note: '',
+  });
+
+  useEffect(() => {
+    const raw = localStorage.getItem(YIELD_STORAGE_KEY);
+    if (!raw) return;
+    try {
+      const parsed = JSON.parse(raw) as YieldRecord[];
+      if (Array.isArray(parsed)) {
+        setYieldRecords(parsed);
+      }
+    } catch {
+      // ignore corrupted data
+    }
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem(YIELD_STORAGE_KEY, JSON.stringify(yieldRecords));
+  }, [yieldRecords]);
+
   // Dữ liệu gốc theo khoảng thời gian
   const rawData = useMemo(() => generateHistoricalData(timeRange), [timeRange]);
 
@@ -148,6 +194,28 @@ export default function History() {
     setSelectedMetrics((prev) =>
       prev.includes(key) ? prev.filter((m) => m !== key) : [...prev, key]
     );
+
+  const filteredYieldRecords = useMemo(() => {
+    const currentYear = new Date().getFullYear();
+    const minYear = currentYear - yieldRange + 1;
+    return yieldRecords
+      .filter((r) => r.year >= minYear && r.year <= currentYear)
+      .sort((a, b) => b.year - a.year || b.createdAt - a.createdAt);
+  }, [yieldRecords, yieldRange]);
+
+  const handleYieldSubmit = (e: FormEvent) => {
+    e.preventDefault();
+    if (!form.year || !form.season.trim()) return;
+    const newRecord: YieldRecord = {
+      ...form,
+      id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
+      createdAt: Date.now(),
+    };
+    setYieldRecords((prev) => [newRecord, ...prev]);
+  };
+
+  const handleYieldDelete = (id: string) =>
+    setYieldRecords((prev) => prev.filter((r) => r.id !== id));
 
   // =======================
   // Render
@@ -322,6 +390,198 @@ export default function History() {
               </div>
             );
           })}
+        </div>
+      </div>
+
+      {/* Lịch sử cây trồng nhiều năm */}
+      <div className="bg-white rounded-3xl shadow-xl p-6 border border-gray-100 space-y-6">
+        <div className="text-center">
+          <h2 className="text-3xl font-bold text-emerald-700 mb-2">Lịch sử cây trồng</h2>
+          <p className="text-slate-600">
+            Lưu dữ liệu 3, 5, 7 và 10 năm về năng suất & lợi nhuận (giá hiện tại).
+          </p>
+        </div>
+
+        <div className="flex flex-wrap gap-2 justify-center">
+          {([3, 5, 7, 10] as YieldHistoryRange[]).map((range) => (
+            <button
+              key={range}
+              onClick={() => setYieldRange(range)}
+              className={`px-4 py-2 rounded-full font-semibold transition-all ${
+                yieldRange === range
+                  ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-lg'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              }`}
+            >
+              {range} năm
+            </button>
+          ))}
+        </div>
+
+        <form onSubmit={handleYieldSubmit} className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          <div className="space-y-3">
+            <label className="block text-sm font-semibold text-slate-700">Năm</label>
+            <input
+              type="number"
+              value={form.year}
+              onChange={(e) => setForm((prev) => ({ ...prev, year: Number(e.target.value) }))}
+              className="w-full rounded-xl border border-slate-200 px-4 py-2 focus:border-emerald-500 focus:outline-none"
+              min={2000}
+              max={2100}
+              required
+            />
+          </div>
+
+          <div className="space-y-3">
+            <label className="block text-sm font-semibold text-slate-700">Mùa vụ</label>
+            <input
+              type="text"
+              value={form.season}
+              onChange={(e) => setForm((prev) => ({ ...prev, season: e.target.value }))}
+              className="w-full rounded-xl border border-slate-200 px-4 py-2 focus:border-emerald-500 focus:outline-none"
+              placeholder="Ví dụ: Mùa vụ chính"
+              required
+            />
+          </div>
+
+          <div className="space-y-3">
+            <label className="block text-sm font-semibold text-slate-700">Tuổi cây (năm)</label>
+            <input
+              type="number"
+              value={form.treeAge}
+              onChange={(e) => setForm((prev) => ({ ...prev, treeAge: Number(e.target.value) }))}
+              className="w-full rounded-xl border border-slate-200 px-4 py-2 focus:border-emerald-500 focus:outline-none"
+              min={0}
+              step={0.5}
+              required
+            />
+          </div>
+
+          <div className="space-y-3">
+            <label className="block text-sm font-semibold text-slate-700">Năng suất khô (tấn/ha)</label>
+            <input
+              type="number"
+              value={form.dryYield}
+              onChange={(e) => setForm((prev) => ({ ...prev, dryYield: Number(e.target.value) }))}
+              className="w-full rounded-xl border border-slate-200 px-4 py-2 focus:border-emerald-500 focus:outline-none"
+              min={0}
+              step={0.1}
+              required
+            />
+          </div>
+
+          <div className="space-y-3">
+            <label className="block text-sm font-semibold text-slate-700">Năng suất tươi (tấn/ha)</label>
+            <input
+              type="number"
+              value={form.freshYield}
+              onChange={(e) => setForm((prev) => ({ ...prev, freshYield: Number(e.target.value) }))}
+              className="w-full rounded-xl border border-slate-200 px-4 py-2 focus:border-emerald-500 focus:outline-none"
+              min={0}
+              step={0.1}
+              required
+            />
+          </div>
+
+          <div className="space-y-3">
+            <label className="block text-sm font-semibold text-slate-700">Giá hiện tại (VNĐ/kg)</label>
+            <input
+              type="number"
+              value={form.currentPrice}
+              onChange={(e) => setForm((prev) => ({ ...prev, currentPrice: Number(e.target.value) }))}
+              className="w-full rounded-xl border border-slate-200 px-4 py-2 focus:border-emerald-500 focus:outline-none"
+              min={0}
+              step={100}
+              required
+            />
+          </div>
+
+          <div className="space-y-3">
+            <label className="block text-sm font-semibold text-slate-700">Lợi nhuận (VNĐ)</label>
+            <input
+              type="number"
+              value={form.profit}
+              onChange={(e) => setForm((prev) => ({ ...prev, profit: Number(e.target.value) }))}
+              className="w-full rounded-xl border border-slate-200 px-4 py-2 focus:border-emerald-500 focus:outline-none"
+              min={0}
+              step={1000}
+              required
+            />
+          </div>
+
+          <div className="space-y-3 lg:col-span-2">
+            <label className="block text-sm font-semibold text-slate-700">Ghi chú</label>
+            <input
+              type="text"
+              value={form.note}
+              onChange={(e) => setForm((prev) => ({ ...prev, note: e.target.value }))}
+              className="w-full rounded-xl border border-slate-200 px-4 py-2 focus:border-emerald-500 focus:outline-none"
+              placeholder="Ví dụ: tăng năng suất nhờ tưới nhỏ giọt"
+            />
+          </div>
+
+          <div className="flex items-end">
+            <button
+              type="submit"
+              className="w-full rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 px-6 py-3 font-semibold text-white shadow-lg hover:from-emerald-600 hover:to-teal-600 transition-all"
+            >
+              Lưu mùa vụ
+            </button>
+          </div>
+        </form>
+
+        <div className="grid grid-cols-1 gap-4">
+          {filteredYieldRecords.length === 0 ? (
+            <div className="rounded-2xl border border-dashed border-slate-200 p-6 text-center text-slate-500">
+              Chưa có dữ liệu lịch sử trong {yieldRange} năm gần nhất.
+            </div>
+          ) : (
+            filteredYieldRecords.map((record) => (
+              <div
+                key={record.id}
+                className="rounded-2xl border border-slate-200 bg-slate-50 p-4 shadow-sm"
+              >
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div>
+                    <h3 className="text-lg font-bold text-slate-800">
+                      {record.season} • {record.year}
+                    </h3>
+                    <p className="text-sm text-slate-600">Tuổi cây: {record.treeAge} năm</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleYieldDelete(record.id)}
+                    className="rounded-full bg-white px-4 py-2 text-sm font-semibold text-rose-600 shadow hover:bg-rose-50"
+                  >
+                    Xóa
+                  </button>
+                </div>
+
+                <div className="mt-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 text-sm">
+                  <div className="rounded-xl bg-white p-3 border border-slate-200">
+                    <p className="text-slate-500">Năng suất khô</p>
+                    <p className="text-lg font-semibold text-slate-800">{record.dryYield} tấn/ha</p>
+                  </div>
+                  <div className="rounded-xl bg-white p-3 border border-slate-200">
+                    <p className="text-slate-500">Năng suất tươi</p>
+                    <p className="text-lg font-semibold text-slate-800">{record.freshYield} tấn/ha</p>
+                  </div>
+                  <div className="rounded-xl bg-white p-3 border border-slate-200">
+                    <p className="text-slate-500">Giá hiện tại</p>
+                    <p className="text-lg font-semibold text-slate-800">{record.currentPrice.toLocaleString('vi-VN')} VNĐ/kg</p>
+                  </div>
+                  <div className="rounded-xl bg-white p-3 border border-slate-200">
+                    <p className="text-slate-500">Lợi nhuận</p>
+                    <p className="text-lg font-semibold text-emerald-700">{record.profit.toLocaleString('vi-VN')} VNĐ</p>
+                  </div>
+                </div>
+
+                {record.note && (
+                  <p className="mt-3 text-sm text-slate-600 italic">Ghi chú: {record.note}</p>
+                )}
+              </div>
+            ))
+          )}
         </div>
       </div>
     </div>

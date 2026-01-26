@@ -105,6 +105,13 @@ export default function Dashboard() {
             percentage={getPercentage(sensorData.soilPH, 4.0, 8.0)}
           />
           <GaugeCard
+            title="Độ dẫn điện (EC)"
+            value={Number(sensorData.soilEC.toFixed(2))}
+            unit="mS/cm"
+            status={getStatus(sensorData.soilEC, 1.0, 2.0)}
+            percentage={getPercentage(sensorData.soilEC, 0.2, 4.0)}
+          />
+          <GaugeCard
             title="Nitơ (N)"
             value={Number(sensorData.nitrogen.toFixed(1))}
             unit="ppm"
@@ -129,6 +136,44 @@ export default function Dashboard() {
       )}
 
       <AssessmentCard />
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="relative overflow-hidden rounded-3xl border border-orange-200 bg-gradient-to-br from-orange-50 via-amber-50 to-yellow-50 p-6 shadow-xl">
+          <div className="absolute -top-8 -right-8 h-28 w-28 rounded-full bg-orange-200/40 blur-2xl" />
+          <h3 className="text-2xl font-black text-orange-800 mb-3">
+            Cảnh báo sớm
+          </h3>
+          <p className="text-slate-700 leading-relaxed">
+            Trong 10 ngày tới, khu vực Tây Nguyên dự báo nắng nóng kéo dài,
+            độ ẩm đất giảm dưới 60%. Nguy cơ ảnh hưởng đến quá trình phân hóa
+            mầm hoa cà phê Robusta.
+          </p>
+          <div className="mt-4 inline-flex items-center rounded-full bg-orange-100 px-4 py-2 text-sm font-semibold text-orange-700">
+            Ưu tiên theo dõi độ ẩm và nhiệt độ đất
+          </div>
+        </div>
+
+        <div className="relative overflow-hidden rounded-3xl border border-emerald-200 bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50 p-6 shadow-xl">
+          <div className="absolute -bottom-8 -left-8 h-28 w-28 rounded-full bg-emerald-200/40 blur-2xl" />
+          <h3 className="text-2xl font-black text-emerald-800 mb-3">
+            Khuyến nghị hành động
+          </h3>
+          <ul className="space-y-3 text-slate-700">
+            <li className="flex gap-3">
+              <span className="text-emerald-600">✅</span>
+              Chủ động tưới nước theo chu kỳ ngắn để giữ ẩm ổn định.
+            </li>
+            <li className="flex gap-3">
+              <span className="text-emerald-600">✅</span>
+              Phủ gốc bằng rơm hoặc vỏ cà phê để hạn chế bốc hơi.
+            </li>
+            <li className="flex gap-3">
+              <span className="text-emerald-600">✅</span>
+              Kiểm tra EC đất sau mỗi đợt tưới để cân đối dinh dưỡng.
+            </li>
+          </ul>
+        </div>
+      </div>
     </div>
   );
 }

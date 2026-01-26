@@ -94,7 +94,7 @@ export default function AssessmentCard() {
           />
         </div>
 
-        <div className="mt-8 p-6 bg-gradient-to-r
+        <div className="mt-8 p-8 bg-gradient-to-r
                         from-amber-500/20 via-orange-500/20 to-red-500/20
                         rounded-2xl text-center backdrop-blur-sm
                         border border-orange-400/30">
@@ -103,7 +103,7 @@ export default function AssessmentCard() {
             <span className="animate-pulse inline-block ml-2">🌾</span>
             <span className="animate-bounce inline-block ml-2">⏰</span>
           </div>
-          <span className="text-xl font-bold bg-gradient-to-r
+          <span className="text-2xl md:text-3xl font-black bg-gradient-to-r
                            from-yellow-300 to-orange-300 bg-clip-text text-transparent">
             Sắp đến mùa thu hoạch (tháng 10-12)
           </span>

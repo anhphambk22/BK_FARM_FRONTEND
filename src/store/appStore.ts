@@ -17,6 +17,7 @@ interface AppState {
     soilTemperature: number;
     soilMoisture: number;
     soilPH: number;
+    soilEC: number;
     nitrogen: number;
     phosphorus: number;
     potassium: number;
@@ -52,6 +53,7 @@ export const useAppStore = create<AppState>((set) => ({
     soilTemperature: 22,
     soilMoisture: 65,
     soilPH: 6.0,
+    soilEC: 1.4,
     nitrogen: 45,
     phosphorus: 25,
     potassium: 35,

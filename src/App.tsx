@@ -10,6 +10,7 @@ const Dashboard = lazy(() => import('./pages/Dashboard'));
 const Advice = lazy(() => import('./pages/Advice'));
 const History = lazy(() => import('./pages/History'));
 const Standards = lazy(() => import('./pages/Standards'));
+const Market = lazy(() => import('./pages/Market'));
 const Settings = lazy(() => import('./pages/Settings'));
 const Pricing = lazy(() => import('./pages/Pricing'));
 const Login = lazy(() => import('./pages/Login'));
@@ -36,6 +37,7 @@ function App() {
       // Trigger dynamic imports behind the scenes
       import('./pages/History');
       import('./pages/Standards');
+      import('./pages/Market');
       import('./pages/Settings');
     }, 1200); // wait for initial render settle
     return () => clearTimeout(timer);
@@ -55,6 +57,8 @@ function App() {
         return <History />;
       case 'standards':
         return <Standards />;
+      case 'market':
+        return <Market />;
       case 'settings':
         return <Settings />;
       case 'pricing':

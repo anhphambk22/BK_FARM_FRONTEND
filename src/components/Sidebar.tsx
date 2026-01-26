@@ -1,4 +1,4 @@
-import { Home, MessageCircle, History, CheckCircle, Settings } from 'lucide-react';
+import { Home, MessageCircle, History, CheckCircle, Settings, ShoppingBag } from 'lucide-react';
 
 interface MenuItemProps {
   icon: React.ComponentType<{ className?: string }>;
@@ -101,8 +101,14 @@ export default function Sidebar({ activePage, onNavigate }: SidebarProps) {
             onClick={() => onNavigate('standards')}
           />
           <MenuItem
+            icon={ShoppingBag}
+            text="5. Thị trường"
+            active={activePage === 'market'}
+            onClick={() => onNavigate('market')}
+          />
+          <MenuItem
             icon={Settings}
-            text="5. Cài đặt"
+            text="6. Cài đặt"
             active={activePage === 'settings'}
             onClick={() => onNavigate('settings')}
           />

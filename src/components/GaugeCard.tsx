@@ -87,11 +87,11 @@ export default function GaugeCard({ title, value, unit, status, percentage }: Ga
           </ResponsiveContainer>
 
           <div className="absolute inset-0 flex flex-col items-center justify-end pb-1 md:pb-2">
-            <span className={`text-3xl sm:text-4xl lg:text-5xl font-black bg-gradient-to-r ${config.gradient}
+            <span className={`text-2xl sm:text-3xl lg:text-4xl font-black bg-gradient-to-r ${config.gradient}
                              bg-clip-text text-transparent drop-shadow-lg`}>
               {value}
             </span>
-            <span className="text-xs sm:text-sm font-medium text-slate-600 mt-0.5">{unit}</span>
+            <span className="text-[11px] sm:text-xs font-medium text-slate-600 mt-0.5">{unit}</span>
           </div>
         </div>
 
