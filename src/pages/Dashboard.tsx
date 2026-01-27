@@ -1,10 +1,12 @@
 import { useAppStore } from '../store/appStore';
+import useSyncSensorData from '../hooks/useSyncSensorData';
 import GaugeCard from '../components/GaugeCard';
 import AssessmentCard from '../components/AssessmentCard';
 import CultivationCalendar from '../components/CultivationCalendar';
 import Clock from '../components/Clock';
 
 export default function Dashboard() {
+  useSyncSensorData();
   const { activeTab, setActiveTab, sensorData } = useAppStore();
 
   const getStatus = (value: number, min: number, max: number): 'good' | 'warning' | 'danger' => {

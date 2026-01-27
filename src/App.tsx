@@ -11,6 +11,7 @@ const Advice = lazy(() => import('./pages/Advice'));
 const History = lazy(() => import('./pages/History'));
 const Standards = lazy(() => import('./pages/Standards'));
 const Market = lazy(() => import('./pages/Market'));
+import SensorDisplay from './components/SensorDisplay';
 const Settings = lazy(() => import('./pages/Settings'));
 const Pricing = lazy(() => import('./pages/Pricing'));
 const Login = lazy(() => import('./pages/Login'));
@@ -34,12 +35,11 @@ function App() {
   // Prefetch frequently visited routes after mount (non-blocking)
   useEffect(() => {
     const timer = setTimeout(() => {
-      // Trigger dynamic imports behind the scenes
       import('./pages/History');
       import('./pages/Standards');
       import('./pages/Market');
       import('./pages/Settings');
-    }, 1200); // wait for initial render settle
+    }, 1000);
     return () => clearTimeout(timer);
   }, []);
 
