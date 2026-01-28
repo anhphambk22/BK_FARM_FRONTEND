@@ -31,7 +31,9 @@ export default function useSyncSensorData() {
             .map((v: any) => v)
             .sort((a: any, b: any) => (b.timestamp || 0) - (a.timestamp || 0))[0];
           if (latest) {
+            console.log("Latest sensor record:", latest);
             updateSensorData(mapSensorData(latest));
+            
           }
         })
         .finally(() => {
