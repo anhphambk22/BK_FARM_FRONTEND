@@ -1,13 +1,16 @@
 import { useAppStore } from '../store/appStore';
-import useSyncSensorData from '../hooks/useSyncSensorData';
+import { useSensorData } from '../hooks/useSensorData';
+import SensorRealtimeDemo from '../components/SensorRealtimeDemo';
+// import useSyncSensorData from '../hooks/useSyncSensorData';
 import GaugeCard from '../components/GaugeCard';
 import AssessmentCard from '../components/AssessmentCard';
 import CultivationCalendar from '../components/CultivationCalendar';
 import Clock from '../components/Clock';
 
 export default function Dashboard() {
-  useSyncSensorData();
-  const { activeTab, setActiveTab, sensorData } = useAppStore();
+  // useSyncSensorData(); // Không cần nữa nếu dùng Firebase real-time
+  const { activeTab, setActiveTab } = useAppStore();
+  const { data: sensorData, loading, error } = useSensorData();
 
   const getStatus = (value: number, min: number, max: number): 'good' | 'warning' | 'danger' => {
     if (value < min || value > max) return 'danger';
@@ -19,8 +22,25 @@ export default function Dashboard() {
     return Math.min(100, Math.max(0, ((value - min) / (max - min)) * 100));
   };
 
+
+  if (loading) return <div>Đang tải dữ liệu cảm biến...</div>;
+  if (error) return <div className="text-red-600">Lỗi: {error}</div>;
+  if (!sensorData) return <div>Không có dữ liệu cảm biến.</div>;
+
+  // Lấy bản ghi mới nhất dựa trên timestamp (gateway_timestamp hoặc node_timestamp)
+  let latestData = {};
+  if (sensorData && typeof sensorData === 'object') {
+    const records = Object.values(sensorData);
+    latestData = records.reduce((latest, curr) => {
+      const latestTime = new Date(latest?.gateway_timestamp || latest?.node_timestamp || 0).getTime();
+      const currTime = new Date(curr?.gateway_timestamp || curr?.node_timestamp || 0).getTime();
+      return currTime > latestTime ? curr : latest;
+    }, records[0] || {});
+  }
+
   return (
     <div className="space-y-8">
+      {/* <SensorRealtimeDemo /> */}
       {/* Lịch canh tác dạng calendar */}
       <CultivationCalendar />
       <div className="mb-8">
@@ -60,84 +80,81 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {activeTab === 'air' && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 justify-items-center">
+      {activeTab === 'air' && latestData && (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6 justify-items-center">
           <GaugeCard
             title="Nhiệt độ"
-            value={Number(sensorData.airTemperature.toFixed(1))}
+            value={latestData.SW_T !== undefined && latestData.SW_T !== null ? Number(latestData.SW_T.toFixed(1)) : 0}
             unit="°C"
-            status={getStatus(sensorData.airTemperature, 18, 25)}
-            percentage={getPercentage(sensorData.airTemperature, 10, 40)}
+            status={getStatus(Number(latestData.SW_T ?? 0), 18, 25)}
+            percentage={getPercentage(Number(latestData.SW_T ?? 0), 10, 40)}
           />
           <GaugeCard
             title="Độ ẩm"
-            value={Number(sensorData.airHumidity.toFixed(1))}
+            value={latestData.SW_RH !== undefined && latestData.SW_RH !== null ? Number(latestData.SW_RH.toFixed(1)) : 0}
             unit="%"
-            status={getStatus(sensorData.airHumidity, 60, 80)}
-            percentage={getPercentage(sensorData.airHumidity, 30, 95)}
-          />
-          <GaugeCard
-            title="Ánh sáng"
-            value={Number(sensorData.light.toFixed(1))}
-            unit="lux"
-            status={getStatus(sensorData.light, 500, 1000)}
-            percentage={getPercentage(sensorData.light, 200, 2000)}
+            status={getStatus(Number(latestData.SW_RH ?? 0), 60, 80)}
+            percentage={getPercentage(Number(latestData.SW_RH ?? 0), 30, 95)}
           />
         </div>
       )}
 
-      {activeTab === 'soil' && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 justify-items-center xl:justify-items-center">
-          <GaugeCard
-            title="Nhiệt độ đất"
-            value={Number(sensorData.soilTemperature.toFixed(1))}
-            unit="°C"
-            status={getStatus(sensorData.soilTemperature, 20, 28)}
-            percentage={getPercentage(sensorData.soilTemperature, 15, 35)}
-          />
-          <GaugeCard
-            title="Độ ẩm đất"
-            value={Number(sensorData.soilMoisture.toFixed(1))}
-            unit="%"
-            status={getStatus(sensorData.soilMoisture, 60, 80)}
-            percentage={getPercentage(sensorData.soilMoisture, 20, 90)}
-          />
-          <GaugeCard
-            title="pH đất"
-            value={Number(sensorData.soilPH.toFixed(1))}
-            unit="pH"
-            status={getStatus(sensorData.soilPH, 5.5, 6.5)}
-            percentage={getPercentage(sensorData.soilPH, 4.0, 8.0)}
-          />
-          <GaugeCard
-            title="Độ dẫn điện (EC)"
-            value={Number(sensorData.soilEC.toFixed(2))}
-            unit="mS/cm"
-            status={getStatus(sensorData.soilEC, 1.0, 2.0)}
-            percentage={getPercentage(sensorData.soilEC, 0.2, 4.0)}
-          />
-          <GaugeCard
-            title="Nitơ (N)"
-            value={Number(sensorData.nitrogen.toFixed(1))}
-            unit="ppm"
-            status={getStatus(sensorData.nitrogen, 30, 60)}
-            percentage={getPercentage(sensorData.nitrogen, 10, 100)}
-          />
-          <GaugeCard
-            title="Phốt pho (P)"
-            value={Number(sensorData.phosphorus.toFixed(1))}
-            unit="ppm"
-            status={getStatus(sensorData.phosphorus, 15, 35)}
-            percentage={getPercentage(sensorData.phosphorus, 5, 50)}
-          />
-          <GaugeCard
-            title="Kali (K)"
-            value={Number(sensorData.potassium.toFixed(1))}
-            unit="ppm"
-            status={getStatus(sensorData.potassium, 20, 40)}
-            percentage={getPercentage(sensorData.potassium, 10, 60)}
-          />
-        </div>
+      {activeTab === 'soil' && latestData && (
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 justify-items-center xl:justify-items-center mb-4">
+            <GaugeCard
+              title="Nhiệt độ đất"
+              value={latestData.T !== undefined && latestData.T !== null ? Number(latestData.T.toFixed(1)) : 0}
+              unit="°C"
+              status={getStatus(Number(latestData.T ?? 0), 20, 28)}
+              percentage={getPercentage(Number(latestData.T ?? 0), 15, 35)}
+            />
+            <GaugeCard
+              title="Độ ẩm đất"
+              value={latestData.RH !== undefined && latestData.RH !== null ? Number(latestData.RH.toFixed(1)) : 0}
+              unit="%"
+              status={getStatus(Number(latestData.RH ?? 0), 60, 80)}
+              percentage={getPercentage(Number(latestData.RH ?? 0), 20, 90)}
+            />
+            <GaugeCard
+              title="pH đất"
+              value={latestData.pH !== undefined && latestData.pH !== null ? Number(latestData.pH.toFixed(1)) : 0}
+              unit="pH"
+              status={getStatus(Number(latestData.pH ?? 0), 5.5, 6.5)}
+              percentage={getPercentage(Number(latestData.pH ?? 0), 4.0, 8.0)}
+            />
+            <GaugeCard
+              title="Độ dẫn điện (EC)"
+              value={latestData.EC !== undefined && latestData.EC !== null ? Number(latestData.EC.toFixed(2)) : 0}
+              unit="mS/cm"
+              status={getStatus(Number(latestData.EC ?? 0), 1.0, 2.0)}
+              percentage={getPercentage(Number(latestData.EC ?? 0), 0.2, 4.0)}
+            />
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-3 gap-6 justify-items-center xl:justify-items-center">
+            <GaugeCard
+              title="Nitơ (N)"
+              value={latestData.N !== undefined && latestData.N !== null ? Number(latestData.N.toFixed(1)) : 0}
+              unit="ppm"
+              status={getStatus(Number(latestData.N ?? 0), 30, 60)}
+              percentage={getPercentage(Number(latestData.N ?? 0), 10, 100)}
+            />
+            <GaugeCard
+              title="Phốt pho (P)"
+              value={latestData.P !== undefined && latestData.P !== null ? Number(latestData.P.toFixed(1)) : 0}
+              unit="ppm"
+              status={getStatus(Number(latestData.P ?? 0), 15, 35)}
+              percentage={getPercentage(Number(latestData.P ?? 0), 5, 50)}
+            />
+            <GaugeCard
+              title="Kali (K)"
+              value={latestData.K !== undefined && latestData.K !== null ? Number(latestData.K.toFixed(1)) : 0}
+              unit="ppm"
+              status={getStatus(Number(latestData.K ?? 0), 20, 40)}
+              percentage={getPercentage(Number(latestData.K ?? 0), 10, 60)}
+            />
+          </div>
+        </>
       )}
 
       <AssessmentCard />
@@ -179,6 +196,7 @@ export default function Dashboard() {
           </ul>
         </div>
       </div>
-    </div>
+	</div>
   );
 }
+
