@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 
 export default function SensorDisplay() {
@@ -6,8 +5,11 @@ export default function SensorDisplay() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
+  // Lấy URL backend từ biến môi trường
+  const API_URL = import.meta.env.VITE_API_URL || "";
+
   useEffect(() => {
-    fetch("/api/sensor/all")
+    fetch(`${API_URL}/api/sensor/all`)
       .then((res) => {
         if (!res.ok) throw new Error("Lỗi khi lấy dữ liệu cảm biến");
         return res.json();
