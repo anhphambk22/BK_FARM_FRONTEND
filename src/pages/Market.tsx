@@ -1,4 +1,8 @@
 import { Globe2, TrendingUp, PhoneCall, Store, Users } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import { getCoffeePrices, type CoffeePriceItem } from '../services/api';
+
+const PRICE_REFRESH_INTERVAL_MS = 60_000;
 
 const weatherMarketNews = [
   {
@@ -24,7 +28,7 @@ const weatherMarketNews = [
   },
 ];
 
-const coffeePrices = [
+const fallbackCoffeePrices: CoffeePriceItem[] = [
   { market: 'Việt Nam (Robusta)', price: '124.500', unit: 'VNĐ/kg', trend: '+1.2%' },
   { market: 'London (Robusta)', price: '3,180', unit: 'USD/tấn', trend: '+0.6%' },
   { market: 'New York (Arabica)', price: '215.4', unit: 'US cent/lb', trend: '-0.4%' },
@@ -34,19 +38,22 @@ const exporters = [
   {
     name: 'Công ty Xuất khẩu Tây Nguyên',
     contact: '0909 888 666',
-    price: '123.800 VNĐ/kg',
+    priceDelta: 0,
+    fallbackPrice: '123.800 VNĐ/kg',
     address: 'Đắk Lắk',
   },
   {
     name: 'Green Coffee VN',
     contact: '028 3899 7788',
-    price: '124.200 VNĐ/kg',
+    priceDelta: 500,
+    fallbackPrice: '124.200 VNĐ/kg',
     address: 'Gia Lai',
   },
   {
     name: 'Highland Export',
     contact: '0912 345 678',
-    price: '123.500 VNĐ/kg',
+    priceDelta: -300,
+    fallbackPrice: '123.500 VNĐ/kg',
     address: 'Lâm Đồng',
   },
 ];
@@ -87,7 +94,115 @@ const experts = [
   },
 ];
 
+function normalizeNumber(value: string) {
+  const cleaned = value.replace(/,/g, '').trim();
+  const n = Number(cleaned);
+  return Number.isFinite(n) ? n : null;
+}
+
+function formatDisplayPrice(item: CoffeePriceItem) {
+  const n = normalizeNumber(item.price);
+  if (n === null) return item.price;
+
+  if (item.unit === 'VNĐ/kg') {
+    return n.toLocaleString('vi-VN');
+  }
+
+  if (item.unit === 'USD/tấn') {
+    return n.toLocaleString('en-US');
+  }
+
+  if (item.unit === 'US cent/lb') {
+    return n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+
+  return item.price;
+}
+
+function formatVndPerKg(value: number) {
+  return `${Math.max(0, Math.round(value)).toLocaleString('vi-VN')} VNĐ/kg`;
+}
+
 export default function Market() {
+  const [coffeePrices, setCoffeePrices] = useState<CoffeePriceItem[]>(fallbackCoffeePrices);
+  const [priceError, setPriceError] = useState<string>('');
+  const [priceUpdatedAt, setPriceUpdatedAt] = useState<string>('');
+  const [priceSource, setPriceSource] = useState<string>('');
+  const [isRefreshingPrice, setIsRefreshingPrice] = useState(false);
+  const [nextRefreshInSec, setNextRefreshInSec] = useState(Math.floor(PRICE_REFRESH_INTERVAL_MS / 1000));
+
+  useEffect(() => {
+    let mounted = true;
+    const refreshIntervalSec = Math.floor(PRICE_REFRESH_INTERVAL_MS / 1000);
+
+    const loadPrices = async (showRefreshingState: boolean) => {
+      if (showRefreshingState && mounted) {
+        setIsRefreshingPrice(true);
+      }
+
+      try {
+        const data = await getCoffeePrices();
+        if (!mounted) return;
+
+        if (Array.isArray(data.prices) && data.prices.length > 0) {
+          setCoffeePrices(data.prices);
+          setPriceError('');
+          setPriceUpdatedAt(data.updatedAt || '');
+          setPriceSource(data.source || '');
+          setNextRefreshInSec(refreshIntervalSec);
+        }
+      } catch (err) {
+        if (!mounted) return;
+        const msg = err instanceof Error ? err.message : 'Không thể cập nhật giá mới, đang hiển thị dữ liệu dự phòng.';
+        setPriceError(msg);
+      } finally {
+        if (mounted) {
+          setIsRefreshingPrice(false);
+        }
+      }
+    };
+
+    void loadPrices(false);
+
+    const poller = window.setInterval(() => {
+      void loadPrices(true);
+    }, PRICE_REFRESH_INTERVAL_MS);
+
+    const countdown = window.setInterval(() => {
+      setNextRefreshInSec((prev) => (prev <= 1 ? refreshIntervalSec : prev - 1));
+    }, 1000);
+
+    return () => {
+      mounted = false;
+      window.clearInterval(poller);
+      window.clearInterval(countdown);
+    };
+  }, []);
+
+  const updatedText = useMemo(() => {
+    if (!priceUpdatedAt) return '';
+    const date = new Date(priceUpdatedAt);
+    if (Number.isNaN(date.getTime())) return '';
+    return date.toLocaleString('vi-VN');
+  }, [priceUpdatedAt]);
+
+  const vietnamRobustaPrice = useMemo(() => {
+    const vn = coffeePrices.find((item) => item.market.includes('Việt Nam') && item.unit === 'VNĐ/kg');
+    if (!vn) return null;
+    return normalizeNumber(vn.price);
+  }, [coffeePrices]);
+
+  const exportersWithPrice = useMemo(
+    () =>
+      exporters.map((exporter) => ({
+        ...exporter,
+        price: vietnamRobustaPrice === null
+          ? exporter.fallbackPrice
+          : formatVndPerKg(vietnamRobustaPrice + exporter.priceDelta),
+      })),
+    [vietnamRobustaPrice]
+  );
+
   return (
     <div className="space-y-8">
       <div className="text-center mb-6">
@@ -133,6 +248,21 @@ export default function Market() {
             <TrendingUp className="w-6 h-6 text-emerald-600 mr-3" />
             <h2 className="text-2xl font-bold text-slate-800">Bảng giá cà phê</h2>
           </div>
+          <div className="mb-3 space-y-1">
+              <p className="text-xs text-slate-500">
+                Tự cập nhật mỗi {Math.floor(PRICE_REFRESH_INTERVAL_MS / 1000)} giây
+                {isRefreshingPrice ? ' - đang làm mới...' : ` - còn ${nextRefreshInSec}s`}
+              </p>
+              {updatedText && (
+                <p className="text-xs text-slate-500">Cập nhật: {updatedText}</p>
+              )}
+              {priceSource && (
+                <p className="text-xs text-slate-500">Nguồn: {priceSource}</p>
+              )}
+              {priceError && (
+                <p className="text-xs text-amber-600">{priceError}</p>
+              )}
+          </div>
           <div className="space-y-4">
             {coffeePrices.map((item) => (
               <div key={item.market} className="flex items-center justify-between rounded-2xl border border-slate-200 p-4">
@@ -141,7 +271,7 @@ export default function Market() {
                   <p className="text-sm text-slate-500">{item.unit}</p>
                 </div>
                 <div className="text-right">
-                  <p className="text-lg font-bold text-emerald-700">{item.price}</p>
+                  <p className="text-lg font-bold text-emerald-700">{formatDisplayPrice(item)}</p>
                   <p className={`text-sm font-semibold ${item.trend.startsWith('-') ? 'text-rose-500' : 'text-emerald-600'}`}>
                     {item.trend}
                   </p>
@@ -159,7 +289,7 @@ export default function Market() {
             <h2 className="text-2xl font-bold text-slate-800">Liên hệ nhà xuất khẩu</h2>
           </div>
           <div className="space-y-4">
-            {exporters.map((exporter) => (
+            {exportersWithPrice.map((exporter) => (
               <div key={exporter.name} className="rounded-2xl border border-slate-200 p-4">
                 <div className="flex items-center justify-between">
                   <div>

@@ -105,6 +105,27 @@ export async function me(token: string) {
 
 export type ChatMessage = { role: 'user' | 'assistant'; content: string };
 
+export type CoffeePriceItem = {
+  market: string;
+  price: string;
+  unit: string;
+  trend: string;
+};
+
+export async function getCoffeePrices() {
+  const res = await tryFetch(`/api/market/coffee-prices?t=${Date.now()}`, { cache: 'no-store' });
+  if (!res.ok) {
+    const data = (await jsonOrEmpty(res)) as unknown;
+    throw new Error(getMessage(data, 'Không lấy được giá cà phê'));
+  }
+
+  return res.json() as Promise<{
+    source: string;
+    updatedAt: string;
+    prices: CoffeePriceItem[];
+  }>;
+}
+
 export async function chat(messages: ChatMessage[]) {
   const res = await tryFetch('/api/ai/chat', {
     method: 'POST',
