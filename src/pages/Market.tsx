@@ -2,7 +2,7 @@ import { Globe2, TrendingUp, PhoneCall, Store, Users } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { getCoffeePrices, type CoffeePriceItem } from '../services/api';
 
-const PRICE_REFRESH_INTERVAL_MS = 60_000;
+const PRICE_REFRESH_INTERVAL_MS = 15_000;
 
 const weatherMarketNews = [
   {
@@ -134,8 +134,12 @@ export default function Market() {
   useEffect(() => {
     let mounted = true;
     const refreshIntervalSec = Math.floor(PRICE_REFRESH_INTERVAL_MS / 1000);
+    let isFetching = false;
 
     const loadPrices = async (showRefreshingState: boolean) => {
+      if (isFetching) return;
+      isFetching = true;
+
       if (showRefreshingState && mounted) {
         setIsRefreshingPrice(true);
       }
@@ -156,6 +160,7 @@ export default function Market() {
         const msg = err instanceof Error ? err.message : 'Không thể cập nhật giá mới, đang hiển thị dữ liệu dự phòng.';
         setPriceError(msg);
       } finally {
+        isFetching = false;
         if (mounted) {
           setIsRefreshingPrice(false);
         }
@@ -172,10 +177,21 @@ export default function Market() {
       setNextRefreshInSec((prev) => (prev <= 1 ? refreshIntervalSec : prev - 1));
     }, 1000);
 
+    const refreshOnFocus = () => {
+      if (document.visibilityState === 'visible') {
+        void loadPrices(true);
+      }
+    };
+
+    document.addEventListener('visibilitychange', refreshOnFocus);
+    window.addEventListener('focus', refreshOnFocus);
+
     return () => {
       mounted = false;
       window.clearInterval(poller);
       window.clearInterval(countdown);
+      document.removeEventListener('visibilitychange', refreshOnFocus);
+      window.removeEventListener('focus', refreshOnFocus);
     };
   }, []);
 
