@@ -2,14 +2,16 @@ import { Globe2, TrendingUp, PhoneCall, Store, Users } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import {
   getCoffeePrices,
+  getHcmCoffeeExporters,
   getWestHighlandsWeather,
   type CoffeePriceItem,
-  type DomesticCoffeePriceItem,
+  type ExporterItem,
   type HighlandsWeatherItem,
 } from '../services/api';
 
 const PRICE_REFRESH_INTERVAL_MS = 15_000;
 const WEATHER_REFRESH_INTERVAL_MS = 15_000;
+const EXPORTER_REFRESH_INTERVAL_MS = 15 * 60 * 1000;
 
 const fallbackWestHighlandsWeather: HighlandsWeatherItem[] = [
   {
@@ -53,26 +55,7 @@ const fallbackCoffeePrices: CoffeePriceItem[] = [
   { market: 'New York (Arabica)', price: '215.4', unit: 'US cent/lb', trend: '-0.4%' },
 ];
 
-const exporters = [
-  {
-    name: 'Công ty Xuất khẩu Tây Nguyên',
-    contact: '0909 888 666',
-    province: 'Đắk Lắk',
-    domesticKey: 'dak_lak',
-  },
-  {
-    name: 'Green Coffee VN',
-    contact: '028 3899 7788',
-    province: 'Gia Lai',
-    domesticKey: 'gia_lai',
-  },
-  {
-    name: 'Highland Export',
-    contact: '0912 345 678',
-    province: 'Lâm Đồng',
-    domesticKey: 'lam_dong',
-  },
-];
+const fallbackExporters: ExporterItem[] = [];
 
 const supplies = [
   {
@@ -148,9 +131,16 @@ export default function Market() {
   const [priceError, setPriceError] = useState<string>('');
   const [priceUpdatedAt, setPriceUpdatedAt] = useState<string>('');
   const [priceSource, setPriceSource] = useState<string>('');
-  const [domesticProvincePrices, setDomesticProvincePrices] = useState<DomesticCoffeePriceItem[]>([]);
   const [isRefreshingPrice, setIsRefreshingPrice] = useState(false);
   const [nextRefreshInSec, setNextRefreshInSec] = useState(Math.floor(PRICE_REFRESH_INTERVAL_MS / 1000));
+
+  const [exporters, setExporters] = useState<ExporterItem[]>(fallbackExporters);
+  const [exporterFetchedAt, setExporterFetchedAt] = useState<string>('');
+  const [exporterError, setExporterError] = useState<string>('');
+  const [isRefreshingExporter, setIsRefreshingExporter] = useState(false);
+  const [nextExporterRefreshInSec, setNextExporterRefreshInSec] = useState(
+    Math.floor(EXPORTER_REFRESH_INTERVAL_MS / 1000)
+  );
 
   useEffect(() => {
     let mounted = true;
@@ -171,7 +161,6 @@ export default function Market() {
 
         if (Array.isArray(data.prices) && data.prices.length > 0) {
           setCoffeePrices(data.prices);
-          setDomesticProvincePrices(Array.isArray(data.domesticPrices) ? data.domesticPrices : []);
           setPriceError('');
           setPriceUpdatedAt(data.updatedAt || '');
           setPriceSource(data.source || '');
@@ -202,6 +191,72 @@ export default function Market() {
     const refreshOnFocus = () => {
       if (document.visibilityState === 'visible') {
         void loadPrices(true);
+      }
+    };
+
+    document.addEventListener('visibilitychange', refreshOnFocus);
+    window.addEventListener('focus', refreshOnFocus);
+
+    return () => {
+      mounted = false;
+      window.clearInterval(poller);
+      window.clearInterval(countdown);
+      document.removeEventListener('visibilitychange', refreshOnFocus);
+      window.removeEventListener('focus', refreshOnFocus);
+    };
+  }, []);
+
+  useEffect(() => {
+    let mounted = true;
+    let isFetching = false;
+    const refreshIntervalSec = Math.floor(EXPORTER_REFRESH_INTERVAL_MS / 1000);
+
+    const loadExporters = async (showRefreshingState: boolean) => {
+      if (isFetching) return;
+      isFetching = true;
+
+      if (showRefreshingState && mounted) {
+        setIsRefreshingExporter(true);
+      }
+
+      try {
+        const data = await getHcmCoffeeExporters();
+        if (!mounted) return;
+
+        if (Array.isArray(data.exporters) && data.exporters.length > 0) {
+          setExporters(data.exporters);
+          setExporterFetchedAt(data.fetchedAt || '');
+          setExporterError('');
+          setNextExporterRefreshInSec(refreshIntervalSec);
+        }
+      } catch (err) {
+        if (!mounted) return;
+        const msg =
+          err instanceof Error
+            ? err.message
+            : 'Không thể cập nhật danh sách nhà xuất khẩu từ Trang Vàng.';
+        setExporterError(msg);
+      } finally {
+        isFetching = false;
+        if (mounted) {
+          setIsRefreshingExporter(false);
+        }
+      }
+    };
+
+    void loadExporters(false);
+
+    const poller = window.setInterval(() => {
+      void loadExporters(true);
+    }, EXPORTER_REFRESH_INTERVAL_MS);
+
+    const countdown = window.setInterval(() => {
+      setNextExporterRefreshInSec((prev) => (prev <= 1 ? refreshIntervalSec : prev - 1));
+    }, 1000);
+
+    const refreshOnFocus = () => {
+      if (document.visibilityState === 'visible') {
+        void loadExporters(true);
       }
     };
 
@@ -297,14 +352,12 @@ export default function Market() {
     return date.toLocaleString('vi-VN');
   }, [weatherFetchedAt]);
 
-  const exportersWithPrice = useMemo(
-    () =>
-      exporters.map((exporter) => ({
-        ...exporter,
-        livePrice: domesticProvincePrices.find((item) => item.key === exporter.domesticKey),
-      })),
-    [domesticProvincePrices]
-  );
+  const exporterUpdatedText = useMemo(() => {
+    if (!exporterFetchedAt) return '';
+    const date = new Date(exporterFetchedAt);
+    if (Number.isNaN(date.getTime())) return '';
+    return date.toLocaleString('vi-VN');
+  }, [exporterFetchedAt]);
 
   return (
     <div className="space-y-8">
@@ -410,32 +463,38 @@ export default function Market() {
         <div className="bg-white rounded-3xl shadow-xl p-6 border border-gray-100">
           <div className="flex items-center mb-4">
             <PhoneCall className="w-6 h-6 text-orange-600 mr-3" />
-            <h2 className="text-2xl font-bold text-slate-800">Liên hệ nhà xuất khẩu</h2>
+            <h2 className="text-2xl font-bold text-slate-800">Nhà xuất khẩu (Trang Vàng)</h2>
+          </div>
+          <div className="mb-3 space-y-1">
+            <p className="text-xs text-slate-500">
+              Nguồn: Trang Vàng Việt Nam - làm mới mỗi {Math.floor(EXPORTER_REFRESH_INTERVAL_MS / 1000)} giây
+              {isRefreshingExporter ? ' - đang làm mới...' : ` - còn ${nextExporterRefreshInSec}s`}
+            </p>
+            {exporterUpdatedText && <p className="text-xs text-slate-500">Cập nhật: {exporterUpdatedText}</p>}
+            {exporterError && <p className="text-xs text-amber-600">{exporterError}</p>}
           </div>
           <div className="space-y-4">
-            {exportersWithPrice.map((exporter) => (
-              <div key={exporter.name} className="rounded-2xl border border-slate-200 p-4">
+            {exporters.map((exporter) => (
+              <a
+                key={exporter.detailUrl}
+                href={exporter.detailUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="rounded-2xl border border-slate-200 p-4 block hover:shadow-md transition hover:border-orange-300"
+              >
                 <div className="flex items-center justify-between">
                   <div>
                     <h3 className="text-lg font-bold text-slate-800">{exporter.name}</h3>
-                    <p className="text-sm text-slate-500">{exporter.province}</p>
+                    <p className="text-sm text-slate-500">{exporter.address}</p>
                   </div>
-                  <div className="text-right">
-                    <span className="text-sm font-semibold text-emerald-600">
-                      {exporter.livePrice
-                        ? `${Number(exporter.livePrice.price.replace(/,/g, '')).toLocaleString('vi-VN')} VNĐ/kg`
-                        : 'Chưa có dữ liệu'}
-                    </span>
-                    {exporter.livePrice && (
-                      <p className={`text-xs font-semibold ${exporter.livePrice.trend.startsWith('-') ? 'text-rose-500' : 'text-emerald-600'}`}>
-                        {exporter.livePrice.trend}
-                      </p>
-                    )}
-                  </div>
+                  <span className="text-xs text-orange-600 font-semibold">Xem chi tiết</span>
                 </div>
-                <p className="mt-2 text-sm text-slate-600">Liên hệ: {exporter.contact}</p>
-              </div>
+                <p className="mt-2 text-sm text-slate-600">Liên hệ: {exporter.phone || 'Đang cập nhật'}</p>
+              </a>
             ))}
+            {!exporters.length && !exporterError && (
+              <p className="text-sm text-slate-500">Đang tải danh sách nhà xuất khẩu từ Trang Vàng...</p>
+            )}
           </div>
         </div>
 

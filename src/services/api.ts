@@ -132,6 +132,13 @@ export type HighlandsWeatherItem = {
   wind: string;
 };
 
+export type ExporterItem = {
+  name: string;
+  detailUrl: string;
+  phone: string;
+  address: string;
+};
+
 export async function getCoffeePrices() {
   const res = await tryFetch(`/api/market/coffee-prices?t=${Date.now()}`, { cache: 'no-store' });
   if (!res.ok) {
@@ -159,6 +166,21 @@ export async function getWestHighlandsWeather() {
     fetchedAt: string;
     cached: boolean;
     provinces: HighlandsWeatherItem[];
+  }>;
+}
+
+export async function getHcmCoffeeExporters() {
+  const res = await tryFetch(`/api/market/exporters/hcm?t=${Date.now()}`, { cache: 'no-store' });
+  if (!res.ok) {
+    const data = (await jsonOrEmpty(res)) as unknown;
+    throw new Error(getMessage(data, 'Không lấy được danh sách nhà xuất khẩu'));
+  }
+
+  return res.json() as Promise<{
+    source: string;
+    fetchedAt: string;
+    cached: boolean;
+    exporters: ExporterItem[];
   }>;
 }
 
