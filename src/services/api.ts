@@ -112,6 +112,18 @@ export type CoffeePriceItem = {
   trend: string;
 };
 
+export type HighlandsWeatherItem = {
+  province: string;
+  slug: string;
+  url: string;
+  currentTemp: string;
+  condition: string;
+  feelsLike: string;
+  lowHigh: string;
+  humidity: string;
+  wind: string;
+};
+
 export async function getCoffeePrices() {
   const res = await tryFetch(`/api/market/coffee-prices?t=${Date.now()}`, { cache: 'no-store' });
   if (!res.ok) {
@@ -123,6 +135,21 @@ export async function getCoffeePrices() {
     source: string;
     updatedAt: string;
     prices: CoffeePriceItem[];
+  }>;
+}
+
+export async function getWestHighlandsWeather() {
+  const res = await tryFetch(`/api/market/weather/west-highlands?t=${Date.now()}`, { cache: 'no-store' });
+  if (!res.ok) {
+    const data = (await jsonOrEmpty(res)) as unknown;
+    throw new Error(getMessage(data, 'Không lấy được thời tiết Tây Nguyên'));
+  }
+
+  return res.json() as Promise<{
+    source: string;
+    fetchedAt: string;
+    cached: boolean;
+    provinces: HighlandsWeatherItem[];
   }>;
 }
 

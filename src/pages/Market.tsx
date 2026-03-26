@@ -1,30 +1,48 @@
 import { Globe2, TrendingUp, PhoneCall, Store, Users } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
-import { getCoffeePrices, type CoffeePriceItem } from '../services/api';
+import {
+  getCoffeePrices,
+  getWestHighlandsWeather,
+  type CoffeePriceItem,
+  type HighlandsWeatherItem,
+} from '../services/api';
 
 const PRICE_REFRESH_INTERVAL_MS = 15_000;
+const WEATHER_REFRESH_INTERVAL_MS = 60_000;
 
-const weatherMarketNews = [
+const fallbackWestHighlandsWeather: HighlandsWeatherItem[] = [
   {
-    title: 'Thời tiết Tây Nguyên: mưa lớn kéo dài',
-    tag: 'Thời tiết',
-    summary: 'Dự báo 7 ngày tới lượng mưa cao, độ ẩm không khí lên 85–90%.',
-    time: 'Cập nhật 2 giờ trước',
-    href: undefined as string | undefined,
+    province: 'Lâm Đồng',
+    slug: 'lam-dong',
+    url: 'https://thoitiet.vn/lam-dong',
+    currentTemp: '--',
+    condition: 'Đang cập nhật...',
+    feelsLike: '',
+    lowHigh: '--/--',
+    humidity: '--',
+    wind: '--',
   },
   {
-    title: 'Giá cà phê nội địa tăng nhẹ',
-    tag: 'Thị trường',
-    summary: 'Giá thu mua tại Đắk Lắk tăng khoảng 1.200đ/kg.',
-    time: 'Cập nhật 5 giờ trước',
-    href: 'https://giacaphe.com/',
+    province: 'Đắk Lắk',
+    slug: 'dak-lak',
+    url: 'https://thoitiet.vn/dak-lak',
+    currentTemp: '--',
+    condition: 'Đang cập nhật...',
+    feelsLike: '',
+    lowHigh: '--/--',
+    humidity: '--',
+    wind: '--',
   },
   {
-    title: 'Chính sách mới về hỗ trợ nông hộ',
-    tag: 'Chính sách',
-    summary: 'Tăng hỗ trợ lãi suất cho hộ canh tác cà phê.',
-    time: 'Cập nhật 1 ngày trước',
-    href: undefined as string | undefined,
+    province: 'Gia Lai',
+    slug: 'gia-lai',
+    url: 'https://thoitiet.vn/gia-lai',
+    currentTemp: '--',
+    condition: 'Đang cập nhật...',
+    feelsLike: '',
+    lowHigh: '--/--',
+    humidity: '--',
+    wind: '--',
   },
 ];
 
@@ -124,6 +142,14 @@ function formatVndPerKg(value: number) {
 }
 
 export default function Market() {
+  const [weatherByProvince, setWeatherByProvince] = useState<HighlandsWeatherItem[]>(fallbackWestHighlandsWeather);
+  const [weatherFetchedAt, setWeatherFetchedAt] = useState<string>('');
+  const [weatherError, setWeatherError] = useState<string>('');
+  const [isRefreshingWeather, setIsRefreshingWeather] = useState(false);
+  const [nextWeatherRefreshInSec, setNextWeatherRefreshInSec] = useState(
+    Math.floor(WEATHER_REFRESH_INTERVAL_MS / 1000)
+  );
+
   const [coffeePrices, setCoffeePrices] = useState<CoffeePriceItem[]>(fallbackCoffeePrices);
   const [priceError, setPriceError] = useState<string>('');
   const [priceUpdatedAt, setPriceUpdatedAt] = useState<string>('');
@@ -195,12 +221,85 @@ export default function Market() {
     };
   }, []);
 
+  useEffect(() => {
+    let mounted = true;
+    let isFetching = false;
+    const refreshIntervalSec = Math.floor(WEATHER_REFRESH_INTERVAL_MS / 1000);
+
+    const loadWestHighlandsWeather = async (showRefreshingState: boolean) => {
+      if (isFetching) return;
+      isFetching = true;
+
+      if (showRefreshingState && mounted) {
+        setIsRefreshingWeather(true);
+      }
+
+      try {
+        const data = await getWestHighlandsWeather();
+        if (!mounted) return;
+
+        if (Array.isArray(data.provinces) && data.provinces.length > 0) {
+          setWeatherByProvince(data.provinces);
+          setWeatherFetchedAt(data.fetchedAt || '');
+          setWeatherError('');
+          setNextWeatherRefreshInSec(refreshIntervalSec);
+        }
+      } catch (err) {
+        if (!mounted) return;
+        const msg =
+          err instanceof Error
+            ? err.message
+            : 'Không thể cập nhật thời tiết Tây Nguyên, đang hiển thị dữ liệu dự phòng.';
+        setWeatherError(msg);
+      } finally {
+        isFetching = false;
+        if (mounted) {
+          setIsRefreshingWeather(false);
+        }
+      }
+    };
+
+    void loadWestHighlandsWeather(false);
+
+    const poller = window.setInterval(() => {
+      void loadWestHighlandsWeather(true);
+    }, WEATHER_REFRESH_INTERVAL_MS);
+
+    const countdown = window.setInterval(() => {
+      setNextWeatherRefreshInSec((prev) => (prev <= 1 ? refreshIntervalSec : prev - 1));
+    }, 1000);
+
+    const refreshOnFocus = () => {
+      if (document.visibilityState === 'visible') {
+        void loadWestHighlandsWeather(true);
+      }
+    };
+
+    document.addEventListener('visibilitychange', refreshOnFocus);
+    window.addEventListener('focus', refreshOnFocus);
+
+    return () => {
+      mounted = false;
+      window.clearInterval(poller);
+      window.clearInterval(countdown);
+      document.removeEventListener('visibilitychange', refreshOnFocus);
+      window.removeEventListener('focus', refreshOnFocus);
+    };
+  }, []);
+
   const updatedText = useMemo(() => {
     if (!priceUpdatedAt) return '';
     const date = new Date(priceUpdatedAt);
     if (Number.isNaN(date.getTime())) return '';
     return date.toLocaleString('vi-VN');
   }, [priceUpdatedAt]);
+
+  const weatherUpdatedText = useMemo(() => {
+    if (!weatherFetchedAt) return '';
+    const date = new Date(weatherFetchedAt);
+    if (Number.isNaN(date.getTime())) return '';
+    return date.toLocaleString('vi-VN');
+  }, [weatherFetchedAt]);
 
   const vietnamRobustaPrice = useMemo(() => {
     const vn = coffeePrices.find((item) => item.market.includes('Việt Nam') && item.unit === 'VNĐ/kg');
@@ -234,26 +333,36 @@ export default function Market() {
         <div className="bg-white rounded-3xl shadow-xl p-6 border border-gray-100">
           <div className="flex items-center mb-4">
             <Globe2 className="w-6 h-6 text-blue-600 mr-3" />
-            <h2 className="text-2xl font-bold text-slate-800">Bảng tin mới</h2>
+            <h2 className="text-2xl font-bold text-slate-800">Thời tiết Tây Nguyên</h2>
+          </div>
+          <div className="mb-3 space-y-1">
+            <p className="text-xs text-slate-500">
+              Dữ liệu thật từ thoitiet.vn - tự cập nhật mỗi {Math.floor(WEATHER_REFRESH_INTERVAL_MS / 1000)} giây
+              {isRefreshingWeather ? ' - đang làm mới...' : ` - còn ${nextWeatherRefreshInSec}s`}
+            </p>
+            {weatherUpdatedText && <p className="text-xs text-slate-500">Cập nhật: {weatherUpdatedText}</p>}
+            {weatherError && <p className="text-xs text-amber-600">{weatherError}</p>}
           </div>
           <div className="space-y-4">
-            {weatherMarketNews.map((news) => (
+            {weatherByProvince.map((item) => (
               <a
-                key={news.title}
-                href={news.href}
-                target={news.href ? '_blank' : undefined}
-                rel={news.href ? 'noopener noreferrer' : undefined}
-                className={`rounded-2xl border border-slate-200 p-4 hover:shadow-md transition block ${
-                  news.href ? 'cursor-pointer hover:border-blue-300' : 'cursor-default'
-                }`}
-                aria-disabled={!news.href}
+                key={item.slug}
+                href={item.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="rounded-2xl border border-slate-200 p-4 hover:shadow-md transition block cursor-pointer hover:border-blue-300"
               >
                 <div className="flex justify-between items-center mb-2">
-                  <span className="text-xs font-semibold uppercase text-blue-600">{news.tag}</span>
-                  <span className="text-xs text-slate-400">{news.time}</span>
+                  <span className="text-xs font-semibold uppercase text-blue-600">{item.province}</span>
+                  <span className="text-xs text-slate-400">Nhiệt độ: {item.currentTemp}</span>
                 </div>
-                <h3 className="text-lg font-bold text-slate-800 mb-1">{news.title}</h3>
-                <p className="text-sm text-slate-600">{news.summary}</p>
+                <h3 className="text-lg font-bold text-slate-800 mb-1">{item.condition}</h3>
+                <p className="text-sm text-slate-600">
+                  {item.feelsLike || 'Cảm giác chưa có dữ liệu'}
+                </p>
+                <p className="text-sm text-slate-600">
+                  Thấp/Cao: {item.lowHigh || '--'} | Độ ẩm: {item.humidity || '--'} | Gió: {item.wind || '--'}
+                </p>
               </a>
             ))}
           </div>
