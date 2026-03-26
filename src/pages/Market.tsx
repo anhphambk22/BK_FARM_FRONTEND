@@ -11,7 +11,7 @@ import {
 
 const PRICE_REFRESH_INTERVAL_MS = 15_000;
 const WEATHER_REFRESH_INTERVAL_MS = 15_000;
-const EXPORTER_REFRESH_INTERVAL_MS = 15 * 60 * 1000;
+const EXPORTER_REFRESH_INTERVAL_MS = 15_000;
 
 const fallbackWestHighlandsWeather: HighlandsWeatherItem[] = [
   {
@@ -50,9 +50,9 @@ const fallbackWestHighlandsWeather: HighlandsWeatherItem[] = [
 ];
 
 const fallbackCoffeePrices: CoffeePriceItem[] = [
-  { market: 'Việt Nam (Robusta)', price: '124.500', unit: 'VNĐ/kg', trend: '+1.2%' },
-  { market: 'London (Robusta)', price: '3,180', unit: 'USD/tấn', trend: '+0.6%' },
-  { market: 'New York (Arabica)', price: '215.4', unit: 'US cent/lb', trend: '-0.4%' },
+  { market: 'Việt Nam (Robusta)', price: '--', unit: 'VNĐ/kg', trend: '--' },
+  { market: 'London (Robusta)', price: '--', unit: 'USD/tấn', trend: '--' },
+  { market: 'New York (Arabica)', price: '--', unit: 'US cent/lb', trend: '--' },
 ];
 
 const fallbackExporters: ExporterItem[] = [];
@@ -449,7 +449,15 @@ export default function Market() {
                 </div>
                 <div className="text-right">
                   <p className="text-lg font-bold text-emerald-700">{formatDisplayPrice(item)}</p>
-                  <p className={`text-sm font-semibold ${item.trend.startsWith('-') ? 'text-rose-500' : 'text-emerald-600'}`}>
+                  <p
+                    className={`text-sm font-semibold ${
+                      item.trend === '--'
+                        ? 'text-slate-500'
+                        : item.trend.startsWith('-')
+                          ? 'text-rose-500'
+                          : 'text-emerald-600'
+                    }`}
+                  >
                     {item.trend}
                   </p>
                 </div>
