@@ -112,6 +112,14 @@ export type CoffeePriceItem = {
   trend: string;
 };
 
+export type DomesticCoffeePriceItem = {
+  key: string;
+  province: string;
+  price: string;
+  trend: string;
+  unit: string;
+};
+
 export type HighlandsWeatherItem = {
   province: string;
   slug: string;
@@ -134,6 +142,7 @@ export async function getCoffeePrices() {
   return res.json() as Promise<{
     source: string;
     updatedAt: string;
+    domesticPrices?: DomesticCoffeePriceItem[];
     prices: CoffeePriceItem[];
   }>;
 }

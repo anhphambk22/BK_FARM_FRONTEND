@@ -4,11 +4,12 @@ import {
   getCoffeePrices,
   getWestHighlandsWeather,
   type CoffeePriceItem,
+  type DomesticCoffeePriceItem,
   type HighlandsWeatherItem,
 } from '../services/api';
 
 const PRICE_REFRESH_INTERVAL_MS = 15_000;
-const WEATHER_REFRESH_INTERVAL_MS = 60_000;
+const WEATHER_REFRESH_INTERVAL_MS = 15_000;
 
 const fallbackWestHighlandsWeather: HighlandsWeatherItem[] = [
   {
@@ -56,40 +57,37 @@ const exporters = [
   {
     name: 'Công ty Xuất khẩu Tây Nguyên',
     contact: '0909 888 666',
-    priceDelta: 0,
-    fallbackPrice: '123.800 VNĐ/kg',
-    address: 'Đắk Lắk',
+    province: 'Đắk Lắk',
+    domesticKey: 'dak_lak',
   },
   {
     name: 'Green Coffee VN',
     contact: '028 3899 7788',
-    priceDelta: 500,
-    fallbackPrice: '124.200 VNĐ/kg',
-    address: 'Gia Lai',
+    province: 'Gia Lai',
+    domesticKey: 'gia_lai',
   },
   {
     name: 'Highland Export',
     contact: '0912 345 678',
-    priceDelta: -300,
-    fallbackPrice: '123.500 VNĐ/kg',
-    address: 'Lâm Đồng',
+    province: 'Lâm Đồng',
+    domesticKey: 'lam_dong',
   },
 ];
 
 const supplies = [
   {
     name: 'Phân hữu cơ vi sinh',
-    price: '6.500.000 VNĐ/tấn',
+    price: 'Liên hệ báo giá',
     supplier: 'Nông nghiệp Xanh',
   },
   {
     name: 'NPK 16-16-8',
-    price: '12.800.000 VNĐ/tấn',
+    price: 'Liên hệ báo giá',
     supplier: 'AgriPlus',
   },
   {
     name: 'Hệ thống tưới nhỏ giọt',
-    price: '22.000.000 VNĐ/bộ',
+    price: 'Liên hệ báo giá',
     supplier: 'Irritech',
   },
 ];
@@ -137,10 +135,6 @@ function formatDisplayPrice(item: CoffeePriceItem) {
   return item.price;
 }
 
-function formatVndPerKg(value: number) {
-  return `${Math.max(0, Math.round(value)).toLocaleString('vi-VN')} VNĐ/kg`;
-}
-
 export default function Market() {
   const [weatherByProvince, setWeatherByProvince] = useState<HighlandsWeatherItem[]>(fallbackWestHighlandsWeather);
   const [weatherFetchedAt, setWeatherFetchedAt] = useState<string>('');
@@ -154,6 +148,7 @@ export default function Market() {
   const [priceError, setPriceError] = useState<string>('');
   const [priceUpdatedAt, setPriceUpdatedAt] = useState<string>('');
   const [priceSource, setPriceSource] = useState<string>('');
+  const [domesticProvincePrices, setDomesticProvincePrices] = useState<DomesticCoffeePriceItem[]>([]);
   const [isRefreshingPrice, setIsRefreshingPrice] = useState(false);
   const [nextRefreshInSec, setNextRefreshInSec] = useState(Math.floor(PRICE_REFRESH_INTERVAL_MS / 1000));
 
@@ -176,6 +171,7 @@ export default function Market() {
 
         if (Array.isArray(data.prices) && data.prices.length > 0) {
           setCoffeePrices(data.prices);
+          setDomesticProvincePrices(Array.isArray(data.domesticPrices) ? data.domesticPrices : []);
           setPriceError('');
           setPriceUpdatedAt(data.updatedAt || '');
           setPriceSource(data.source || '');
@@ -301,21 +297,13 @@ export default function Market() {
     return date.toLocaleString('vi-VN');
   }, [weatherFetchedAt]);
 
-  const vietnamRobustaPrice = useMemo(() => {
-    const vn = coffeePrices.find((item) => item.market.includes('Việt Nam') && item.unit === 'VNĐ/kg');
-    if (!vn) return null;
-    return normalizeNumber(vn.price);
-  }, [coffeePrices]);
-
   const exportersWithPrice = useMemo(
     () =>
       exporters.map((exporter) => ({
         ...exporter,
-        price: vietnamRobustaPrice === null
-          ? exporter.fallbackPrice
-          : formatVndPerKg(vietnamRobustaPrice + exporter.priceDelta),
+        livePrice: domesticProvincePrices.find((item) => item.key === exporter.domesticKey),
       })),
-    [vietnamRobustaPrice]
+    [domesticProvincePrices]
   );
 
   return (
@@ -352,17 +340,28 @@ export default function Market() {
                 rel="noopener noreferrer"
                 className="rounded-2xl border border-slate-200 p-4 hover:shadow-md transition block cursor-pointer hover:border-blue-300"
               >
-                <div className="flex justify-between items-center mb-2">
-                  <span className="text-xs font-semibold uppercase text-blue-600">{item.province}</span>
-                  <span className="text-xs text-slate-400">Nhiệt độ: {item.currentTemp}</span>
+                <div className="flex justify-between items-start mb-3">
+                  <span className="text-sm font-semibold uppercase text-blue-700 tracking-wide">{item.province}</span>
+                  <div className="text-right">
+                    <p className="text-xs text-slate-400">Nhiệt độ hiện tại</p>
+                    <p className="text-xl font-bold text-slate-800">{item.currentTemp}</p>
+                  </div>
                 </div>
-                <h3 className="text-lg font-bold text-slate-800 mb-1">{item.condition}</h3>
-                <p className="text-sm text-slate-600">
-                  {item.feelsLike || 'Cảm giác chưa có dữ liệu'}
-                </p>
-                <p className="text-sm text-slate-600">
-                  Thấp/Cao: {item.lowHigh || '--'} | Độ ẩm: {item.humidity || '--'} | Gió: {item.wind || '--'}
-                </p>
+                <p className="text-sm font-medium text-slate-700 mb-3">{item.condition}</p>
+                <div className="grid grid-cols-3 gap-2 text-sm">
+                  <div className="rounded-lg bg-slate-50 px-3 py-2 border border-slate-100">
+                    <p className="text-[11px] uppercase tracking-wide text-slate-500">Thấp/Cao</p>
+                    <p className="font-semibold text-slate-800">{item.lowHigh || '--'}</p>
+                  </div>
+                  <div className="rounded-lg bg-slate-50 px-3 py-2 border border-slate-100">
+                    <p className="text-[11px] uppercase tracking-wide text-slate-500">Độ ẩm</p>
+                    <p className="font-semibold text-slate-800">{item.humidity || '--'}</p>
+                  </div>
+                  <div className="rounded-lg bg-slate-50 px-3 py-2 border border-slate-100">
+                    <p className="text-[11px] uppercase tracking-wide text-slate-500">Gió</p>
+                    <p className="font-semibold text-slate-800">{item.wind || '--'}</p>
+                  </div>
+                </div>
               </a>
             ))}
           </div>
@@ -419,9 +418,20 @@ export default function Market() {
                 <div className="flex items-center justify-between">
                   <div>
                     <h3 className="text-lg font-bold text-slate-800">{exporter.name}</h3>
-                    <p className="text-sm text-slate-500">{exporter.address}</p>
+                    <p className="text-sm text-slate-500">{exporter.province}</p>
                   </div>
-                  <span className="text-sm font-semibold text-emerald-600">{exporter.price}</span>
+                  <div className="text-right">
+                    <span className="text-sm font-semibold text-emerald-600">
+                      {exporter.livePrice
+                        ? `${Number(exporter.livePrice.price.replace(/,/g, '')).toLocaleString('vi-VN')} VNĐ/kg`
+                        : 'Chưa có dữ liệu'}
+                    </span>
+                    {exporter.livePrice && (
+                      <p className={`text-xs font-semibold ${exporter.livePrice.trend.startsWith('-') ? 'text-rose-500' : 'text-emerald-600'}`}>
+                        {exporter.livePrice.trend}
+                      </p>
+                    )}
+                  </div>
                 </div>
                 <p className="mt-2 text-sm text-slate-600">Liên hệ: {exporter.contact}</p>
               </div>
@@ -434,6 +444,7 @@ export default function Market() {
             <Store className="w-6 h-6 text-purple-600 mr-3" />
             <h2 className="text-2xl font-bold text-slate-800">Mua bán vật tư nông nghiệp</h2>
           </div>
+          <p className="text-xs text-slate-500 mb-3">Giá vật tư thay đổi theo khu vực và nhà cung cấp, vui lòng liên hệ để nhận báo giá thực tế.</p>
           <div className="space-y-4">
             {supplies.map((item) => (
               <div key={item.name} className="rounded-2xl border border-slate-200 p-4">
