@@ -139,6 +139,13 @@ export type ExporterItem = {
   address: string;
 };
 
+export type CoffeeFertilizerItem = {
+  name: string;
+  price: string;
+  url: string;
+  source: string;
+};
+
 export async function getCoffeePrices() {
   const res = await tryFetch(`/api/market/coffee-prices?t=${Date.now()}`, { cache: 'no-store' });
   if (!res.ok) {
@@ -181,6 +188,21 @@ export async function getHcmCoffeeExporters() {
     fetchedAt: string;
     cached: boolean;
     exporters: ExporterItem[];
+  }>;
+}
+
+export async function getCoffeeFertilizers() {
+  const res = await tryFetch(`/api/market/fertilizers/coffee?t=${Date.now()}`, { cache: 'no-store' });
+  if (!res.ok) {
+    const data = (await jsonOrEmpty(res)) as unknown;
+    throw new Error(getMessage(data, 'Không lấy được danh sách phân bón'));
+  }
+
+  return res.json() as Promise<{
+    source: string;
+    fetchedAt: string;
+    cached: boolean;
+    fertilizers: CoffeeFertilizerItem[];
   }>;
 }
 

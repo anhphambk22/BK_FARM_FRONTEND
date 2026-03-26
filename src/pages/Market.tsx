@@ -1,10 +1,12 @@
 import { Globe2, TrendingUp, PhoneCall, Store, Users } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import {
+  getCoffeeFertilizers,
   getCoffeePrices,
   getHcmCoffeeExporters,
   getWestHighlandsWeather,
   type CoffeePriceItem,
+  type CoffeeFertilizerItem,
   type ExporterItem,
   type HighlandsWeatherItem,
 } from '../services/api';
@@ -12,6 +14,7 @@ import {
 const PRICE_REFRESH_INTERVAL_MS = 15_000;
 const WEATHER_REFRESH_INTERVAL_MS = 15_000;
 const EXPORTER_REFRESH_INTERVAL_MS = 15_000;
+const FERTILIZER_REFRESH_INTERVAL_MS = 15_000;
 
 const fallbackWestHighlandsWeather: HighlandsWeatherItem[] = [
   {
@@ -57,23 +60,7 @@ const fallbackCoffeePrices: CoffeePriceItem[] = [
 
 const fallbackExporters: ExporterItem[] = [];
 
-const supplies = [
-  {
-    name: 'Phân hữu cơ vi sinh',
-    price: 'Liên hệ báo giá',
-    supplier: 'Nông nghiệp Xanh',
-  },
-  {
-    name: 'NPK 16-16-8',
-    price: 'Liên hệ báo giá',
-    supplier: 'AgriPlus',
-  },
-  {
-    name: 'Hệ thống tưới nhỏ giọt',
-    price: 'Liên hệ báo giá',
-    supplier: 'Irritech',
-  },
-];
+const fallbackFertilizers: CoffeeFertilizerItem[] = [];
 
 const experts = [
   {
@@ -142,6 +129,14 @@ export default function Market() {
     Math.floor(EXPORTER_REFRESH_INTERVAL_MS / 1000)
   );
 
+  const [fertilizers, setFertilizers] = useState<CoffeeFertilizerItem[]>(fallbackFertilizers);
+  const [fertilizerFetchedAt, setFertilizerFetchedAt] = useState<string>('');
+  const [fertilizerError, setFertilizerError] = useState<string>('');
+  const [isRefreshingFertilizer, setIsRefreshingFertilizer] = useState(false);
+  const [nextFertilizerRefreshInSec, setNextFertilizerRefreshInSec] = useState(
+    Math.floor(FERTILIZER_REFRESH_INTERVAL_MS / 1000)
+  );
+
   useEffect(() => {
     let mounted = true;
     const refreshIntervalSec = Math.floor(PRICE_REFRESH_INTERVAL_MS / 1000);
@@ -191,6 +186,69 @@ export default function Market() {
     const refreshOnFocus = () => {
       if (document.visibilityState === 'visible') {
         void loadPrices(true);
+      }
+    };
+
+    document.addEventListener('visibilitychange', refreshOnFocus);
+    window.addEventListener('focus', refreshOnFocus);
+
+    return () => {
+      mounted = false;
+      window.clearInterval(poller);
+      window.clearInterval(countdown);
+      document.removeEventListener('visibilitychange', refreshOnFocus);
+      window.removeEventListener('focus', refreshOnFocus);
+    };
+  }, []);
+
+  useEffect(() => {
+    let mounted = true;
+    let isFetching = false;
+    const refreshIntervalSec = Math.floor(FERTILIZER_REFRESH_INTERVAL_MS / 1000);
+
+    const loadFertilizers = async (showRefreshingState: boolean) => {
+      if (isFetching) return;
+      isFetching = true;
+
+      if (showRefreshingState && mounted) {
+        setIsRefreshingFertilizer(true);
+      }
+
+      try {
+        const data = await getCoffeeFertilizers();
+        if (!mounted) return;
+
+        if (Array.isArray(data.fertilizers) && data.fertilizers.length > 0) {
+          setFertilizers(data.fertilizers);
+          setFertilizerFetchedAt(data.fetchedAt || '');
+          setFertilizerError('');
+          setNextFertilizerRefreshInSec(refreshIntervalSec);
+        }
+      } catch (err) {
+        if (!mounted) return;
+        const msg = err instanceof Error ? err.message : 'Không thể cập nhật danh sách phân bón.';
+        setFertilizerError(msg);
+      } finally {
+        isFetching = false;
+        if (mounted) {
+          setIsRefreshingFertilizer(false);
+        }
+      }
+    };
+
+    void loadFertilizers(false);
+
+    const poller = window.setInterval(() => {
+      void loadFertilizers(true);
+    }, FERTILIZER_REFRESH_INTERVAL_MS);
+
+    const countdown = window.setInterval(() => {
+      setNextFertilizerRefreshInSec((prev) => (prev <= 1 ? refreshIntervalSec : prev - 1));
+    }, 1000);
+
+    const refreshOnFocus = () => {
+      if (document.visibilityState === 'visible') {
+        void loadFertilizers(true);
       }
     };
 
@@ -359,6 +417,13 @@ export default function Market() {
     return date.toLocaleString('vi-VN');
   }, [exporterFetchedAt]);
 
+  const fertilizerUpdatedText = useMemo(() => {
+    if (!fertilizerFetchedAt) return '';
+    const date = new Date(fertilizerFetchedAt);
+    if (Number.isNaN(date.getTime())) return '';
+    return date.toLocaleString('vi-VN');
+  }, [fertilizerFetchedAt]);
+
   return (
     <div className="space-y-8">
       <div className="text-center mb-6">
@@ -509,21 +574,37 @@ export default function Market() {
         <div className="bg-white rounded-3xl shadow-xl p-6 border border-gray-100">
           <div className="flex items-center mb-4">
             <Store className="w-6 h-6 text-purple-600 mr-3" />
-            <h2 className="text-2xl font-bold text-slate-800">Mua bán vật tư nông nghiệp</h2>
+            <h2 className="text-2xl font-bold text-slate-800">Phân bón cho cây cà phê</h2>
           </div>
-          <p className="text-xs text-slate-500 mb-3">Giá vật tư thay đổi theo khu vực và nhà cung cấp, vui lòng liên hệ để nhận báo giá thực tế.</p>
+          <div className="mb-3 space-y-1">
+            <p className="text-xs text-slate-500">
+              Nguồn: nongnghieppho.vn - làm mới mỗi {Math.floor(FERTILIZER_REFRESH_INTERVAL_MS / 1000)} giây
+              {isRefreshingFertilizer ? ' - đang làm mới...' : ` - còn ${nextFertilizerRefreshInSec}s`}
+            </p>
+            {fertilizerUpdatedText && <p className="text-xs text-slate-500">Cập nhật: {fertilizerUpdatedText}</p>}
+            {fertilizerError && <p className="text-xs text-amber-600">{fertilizerError}</p>}
+          </div>
           <div className="space-y-4">
-            {supplies.map((item) => (
-              <div key={item.name} className="rounded-2xl border border-slate-200 p-4">
+            {fertilizers.map((item) => (
+              <a
+                key={item.url}
+                href={item.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="rounded-2xl border border-slate-200 p-4 block hover:shadow-md transition hover:border-purple-300"
+              >
                 <div className="flex items-center justify-between">
                   <div>
                     <h3 className="text-lg font-bold text-slate-800">{item.name}</h3>
-                    <p className="text-sm text-slate-500">Nhà cung cấp: {item.supplier}</p>
+                    <p className="text-sm text-slate-500">Nguồn: {item.source}</p>
                   </div>
                   <span className="text-sm font-semibold text-slate-700">{item.price}</span>
                 </div>
-              </div>
+              </a>
             ))}
+            {!fertilizers.length && !fertilizerError && (
+              <p className="text-sm text-slate-500">Đang tải danh sách phân bón cho cây cà phê...</p>
+            )}
           </div>
         </div>
       </div>
