@@ -482,7 +482,7 @@ export default function Market() {
             {exporterError && <p className="text-xs text-amber-600">{exporterError}</p>}
           </div>
           <div className="space-y-4">
-            {exporters.map((exporter) => (
+            {exporters.slice(0, 3).map((exporter) => (
               <a
                 key={exporter.detailUrl}
                 href={exporter.detailUrl}
